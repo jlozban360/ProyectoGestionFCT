@@ -1,0 +1,67 @@
+version: '3.9'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: fct_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: gestion_fct
+      POSTGRES_USER: fct_user
+      POSTGRES_PASSWORD: fct_secure_2024
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - fct_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fct_user -d gestion_fct"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: fct_backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/gestion_fct
+      SPRING_DATASOURCE_USERNAME: fct_user
+      SPRING_DATASOURCE_PASSWORD: fct_secure_2024
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      JWT_SECRET: fct-jwt-secret-key-2024-muy-seguro-cambiar-en-produccion
+      JWT_EXPIRATION: 86400000
+    networks:
+      - fct_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: /api
+    container_name: fct_frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "3050:80"
+    networks:
+      - fct_network
+
+volumes:
+  postgres_data:
+
+networks:
+  fct_network:
+    driver: bridge
