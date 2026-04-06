@@ -8,7 +8,7 @@ services:
     environment:
       POSTGRES_DB: gestion_fct
       POSTGRES_USER: fct_user
-      POSTGRES_PASSWORD: fct_secure_2024
+      POSTGRES_PASSWORD: fct_secure_202420252026
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./docker/init.sql:/docker-entrypoint-initdb.d/init.sql
@@ -29,12 +29,12 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    environment:
+    environment: 
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/gestion_fct
       SPRING_DATASOURCE_USERNAME: fct_user
-      SPRING_DATASOURCE_PASSWORD: fct_secure_2024
+      SPRING_DATASOURCE_PASSWORD: fct_secure_202420252026
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
-      JWT_SECRET: fct-jwt-secret-key-2024-muy-seguro-cambiar-en-produccion
+      JWT_SECRET: nX7mK2pQvR9sL4wY8jF3hD6tA1cE5uB0
       JWT_EXPIRATION: 86400000
     networks:
       - fct_network
