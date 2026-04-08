@@ -19,7 +19,8 @@ public interface ContactoRepository extends JpaRepository<Contacto, Long> {
            "GROUP BY c.profesor.nombre ORDER BY COUNT(c) DESC")
     List<Object[]> findProfesoresActivos();
 
-    @Query("SELECT FUNCTION('MONTH', c.fecha), COUNT(c) FROM Contacto c " +
-           "WHERE FUNCTION('YEAR', c.fecha) = :year GROUP BY FUNCTION('MONTH', c.fecha)")
+    @Query(value = "SELECT EXTRACT(MONTH FROM fecha) as mes, COUNT(*) as total " +
+                   "FROM contactos WHERE EXTRACT(YEAR FROM fecha) = :year " +
+                   "GROUP BY EXTRACT(MONTH FROM fecha)", nativeQuery = true)
     List<Object[]> findContactosPorMes(@Param("year") int year);
 }

@@ -1,0 +1,19 @@
+# Frontend
+frontend/node_modules/
+frontend/dist/
+
+# Backend
+backend/target/
+backend/*.jar
+
+# Entorno
+.env
+*.env.local
+
+# IDEs
+.idea/
+.vscode/
+*.iml
+
+# Docker
+docker-compose.override.yml

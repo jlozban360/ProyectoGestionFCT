@@ -4,7 +4,7 @@ import {
   Form, Input, Select, Button, Card, Row, Col, Typography, Space, message
 } from 'antd'
 import { ArrowLeftOutlined, SaveOutlined } from '@ant-design/icons'
-import { alumnoService } from '../../services/api'
+import { alumnoService, empresaService } from '../../services/api'
 
 const { Title, Text } = Typography
 const { Option } = Select
@@ -14,13 +14,13 @@ export default function AlumnoForm() {
   const navigate = useNavigate()
   const [form] = Form.useForm()
   const [loading, setLoading] = useState(false)
+  const [empresas, setEmpresas] = useState([])
   const isEdit = Boolean(id)
 
   useEffect(() => {
+    empresaService.getAll({}).then(({ data }) => setEmpresas(data.content || data)).catch(() => {})
     if (isEdit) {
-      alumnoService.getById(id)
-        .then(({ data }) => form.setFieldsValue(data))
-        .catch(() => {})
+      alumnoService.getById(id).then(({ data }) => form.setFieldsValue(data)).catch(() => {})
     }
   }, [id])
 
@@ -29,9 +29,15 @@ export default function AlumnoForm() {
     try {
       if (isEdit) {
         await alumnoService.update(id, values)
+        if (values.empresaId !== undefined) {
+          await alumnoService.asignarEmpresa(id, { empresaId: values.empresaId || null, estado: values.estado })
+        }
         message.success('Alumno actualizado')
       } else {
-        await alumnoService.create(values)
+        const { data } = await alumnoService.create(values)
+        if (values.empresaId) {
+          await alumnoService.asignarEmpresa(data.id, { empresaId: values.empresaId, estado: values.estado })
+        }
         message.success('Alumno creado')
       }
       navigate('/alumnos')
@@ -81,7 +87,7 @@ export default function AlumnoForm() {
                 </Col>
               </Row>
               <Form.Item name="observaciones" label="Observaciones">
-                <Input.TextArea rows={3} placeholder="Habilidades especiales, preferencias, disponibilidad..." />
+                <Input.TextArea rows={3} placeholder="Habilidades, preferencias, disponibilidad..." />
               </Form.Item>
             </Card>
           </Col>
@@ -90,10 +96,10 @@ export default function AlumnoForm() {
             <Card title="Datos académicos" style={{ borderRadius: 12, border: '1px solid #e2e8f0', marginBottom: 16 }}>
               <Form.Item name="ciclo" label="Ciclo formativo" rules={[{ required: true }]}>
                 <Select placeholder="Selecciona ciclo">
-                  <Option value="DAM">DAM - Desarrollo Aplicaciones Multiplataforma</Option>
-                  <Option value="DAW">DAW - Desarrollo Aplicaciones Web</Option>
-                  <Option value="SMR">SMR - Sistemas Microinformáticos y Redes</Option>
-                  <Option value="ASIR">ASIR - Administración Sistemas Informáticos</Option>
+                  <Option value="DAM">DAM</Option>
+                  <Option value="DAW">DAW</Option>
+                  <Option value="SMR">SMR</Option>
+                  <Option value="ASIR">ASIR</Option>
                 </Select>
               </Form.Item>
               <Form.Item name="curso" label="Curso" rules={[{ required: true }]}>
@@ -109,6 +115,11 @@ export default function AlumnoForm() {
                   <Option value="ACEPTADO">Aceptado</Option>
                   <Option value="RECHAZADO">Rechazado</Option>
                   <Option value="EN_PRACTICAS">En prácticas</Option>
+                </Select>
+              </Form.Item>
+              <Form.Item name="empresaId" label="Empresa asignada">
+                <Select placeholder="Sin asignar" allowClear showSearch optionFilterProp="children">
+                  {empresas.map(e => <Option key={e.id} value={e.id}>{e.nombre}</Option>)}
                 </Select>
               </Form.Item>
             </Card>

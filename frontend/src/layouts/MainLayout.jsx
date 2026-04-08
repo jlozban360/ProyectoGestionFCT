@@ -1,12 +1,13 @@
 import { useState } from 'react'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
-import { Layout, Menu, Avatar, Dropdown, Typography, Badge, Space } from 'antd'
+import { Layout, Menu, Avatar, Dropdown, Typography, Space } from 'antd'
 import {
   DashboardOutlined, BankOutlined, TeamOutlined, UserOutlined,
   PhoneOutlined, LogoutOutlined, MenuFoldOutlined, MenuUnfoldOutlined,
-  BellOutlined, SettingOutlined
+  SettingOutlined
 } from '@ant-design/icons'
 import { useAuthStore } from '../store/authStore'
+import NotificacionesDrawer from '../components/NotificacionesDrawer'
 
 const { Sider, Header, Content } = Layout
 const { Text } = Typography
@@ -37,6 +38,7 @@ export default function MainLayout() {
 
   const handleUserMenu = ({ key }) => {
     if (key === 'logout') logout()
+    if (key === 'perfil') navigate('/perfil')
   }
 
   const selectedKey = '/' + location.pathname.split('/')[1]
@@ -141,9 +143,7 @@ export default function MainLayout() {
             {collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
           </div>
           <Space size={16}>
-            <Badge count={0} showZero={false}>
-              <BellOutlined style={{ fontSize: 18, color: '#64748b', cursor: 'pointer' }} />
-            </Badge>
+            <NotificacionesDrawer />
             <Dropdown menu={{ items: userMenuItems, onClick: handleUserMenu }}>
               <Avatar size={36} style={{ background: '#2563eb', cursor: 'pointer' }}>
                 {user?.nombre?.[0]?.toUpperCase()}
