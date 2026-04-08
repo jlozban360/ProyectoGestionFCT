@@ -11,6 +11,7 @@ import AlumnoForm from './pages/alumnos/AlumnoForm'
 import ProfesoresList from './pages/profesores/ProfesoresList'
 import ProfesorForm from './pages/profesores/ProfesorForm'
 import ContactosList from './pages/contactos/ContactosList'
+import PerfilPage from './pages/perfil/PerfilPage'
 
 function PrivateRoute({ children }) {
   const token = useAuthStore(s => s.token)
@@ -49,6 +50,7 @@ export default function App() {
             <AdminRoute><ProfesorForm /></AdminRoute>
           } />
           <Route path="contactos" element={<ContactosList />} />
+          <Route path="perfil" element={<PerfilPage />} />
         </Route>
       </Routes>
     </BrowserRouter>
