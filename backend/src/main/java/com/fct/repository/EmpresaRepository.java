@@ -12,7 +12,7 @@ import java.util.Optional;
 public interface EmpresaRepository extends JpaRepository<Empresa, Long> {
 
     @Query("SELECT e FROM Empresa e WHERE " +
-            "(:search IS NULL OR e.nombre LIKE %:search% OR e.cif LIKE %:search%) " +
+            "(:search IS NULL OR e.nombre ILIKE %:search% OR e.cif ILIKE %:search%) " +
             "AND (:sector IS NULL OR e.sector = :sector)")
     Page<Empresa> findWithFilters(@Param("search") String search,
                                   @Param("sector") String sector,

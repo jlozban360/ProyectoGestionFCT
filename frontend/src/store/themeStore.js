@@ -10,9 +10,8 @@ export const useThemeStore = create(
         tema: state.tema === 'light' ? 'dark' : 'light'
       })),
       isDark: () => get().tema === 'dark',
+      initTheme: () => {},
     }),
-    {
-      name: 'fct-theme',
-    }
+    { name: 'fct-theme' }
   )
 )

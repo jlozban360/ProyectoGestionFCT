@@ -49,6 +49,9 @@ export default function App() {
           <Route path="profesores/nuevo" element={
             <AdminRoute><ProfesorForm /></AdminRoute>
           } />
+          <Route path="profesores/:id/editar" element={
+            <AdminRoute><ProfesorForm /></AdminRoute>
+          } />
           <Route path="contactos" element={<ContactosList />} />
           <Route path="perfil" element={<PerfilPage />} />
         </Route>
