@@ -52,7 +52,7 @@ public class AlumnoController {
             @PathVariable Long id,
             @RequestBody AlumnoDto.AsignarRequest req
     ) {
-        System.out.println("=== ASIGNAR === alumnoId: " + id + " req: " + req.getEmpresaId() + " / " + req.getEstado());
+        //System.out.println("=== ASIGNAR === alumnoId: " + id + " req: " + req.getEmpresaId() + " / " + req.getEstado());
         return ResponseEntity.ok(alumnoService.asignarEmpresa(id, req));
     }
 
