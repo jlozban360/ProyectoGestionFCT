@@ -40,6 +40,10 @@ public class Profesor implements UserDetails {
     @Column(updatable = false)
     private LocalDateTime createdAt;
 
+    @Column(nullable = false)
+    @Builder.Default
+    private String tema = "light";
+
     @PrePersist
     protected void onCreate() { createdAt = LocalDateTime.now(); }
 

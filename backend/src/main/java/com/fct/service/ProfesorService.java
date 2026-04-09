@@ -57,6 +57,7 @@ public class ProfesorService {
         if (req.getPassword() != null && !req.getPassword().isBlank()) {
             profesor.setPassword(passwordEncoder.encode(req.getPassword()));
         }
+        if (req.getTema() != null) profesor.setTema(req.getTema());
         return ProfesorDto.Response.from(profesorRepository.save(profesor));
     }
 

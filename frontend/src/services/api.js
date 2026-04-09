@@ -18,7 +18,7 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    if (error.response?.status === 401 || error.response?.status === 403) {
       useAuthStore.getState().logout()
     }
     return Promise.reject(error)
@@ -60,8 +60,8 @@ export const alumnoService = {
   create: (data) => api.post('/alumnos', data),
   update: (id, data) => api.put(`/alumnos/${id}`, data),
   delete: (id) => api.delete(`/alumnos/${id}`),
-  asignarEmpresa: (alumnoId, empresaId, estado) =>
-    api.post(`/alumnos/${alumnoId}/asignar`, { empresaId, estado }),
+  asignarEmpresa: (alumnoId, req) =>
+    api.post(`/alumnos/${alumnoId}/asignar`, req),
 }
 
 // ── Profesores ──────────────────────────────────────────────────────

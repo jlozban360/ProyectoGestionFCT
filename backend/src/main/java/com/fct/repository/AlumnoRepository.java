@@ -20,7 +20,6 @@ public interface AlumnoRepository extends JpaRepository<Alumno, Long> {
     List<Object[]> countByCiclo();
 
     @Query("SELECT a FROM Alumno a WHERE " +
-           "(:search IS NULL OR LOWER(a.nombre) LIKE LOWER(CONCAT('%', :search, '%')) " +
-           "OR LOWER(a.apellidos) LIKE LOWER(CONCAT('%', :search, '%')))")
+            "(:search IS NULL OR a.nombre LIKE %:search% OR a.apellidos LIKE %:search%)")
     Page<Alumno> findBySearch(@Param("search") String search, Pageable pageable);
 }

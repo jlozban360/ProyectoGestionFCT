@@ -27,21 +27,33 @@ export default function AlumnoForm() {
   const onFinish = async (values) => {
     setLoading(true)
     try {
-      if (isEdit) {
-        await alumnoService.update(id, values)
-        if (values.empresaId !== undefined) {
-          await alumnoService.asignarEmpresa(id, { empresaId: values.empresaId || null, estado: values.estado })
-        }
-        message.success('Alumno actualizado')
-      } else {
-        const { data } = await alumnoService.create(values)
-        if (values.empresaId) {
-          await alumnoService.asignarEmpresa(data.id, { empresaId: values.empresaId, estado: values.estado })
-        }
+      const empresaId = values.empresaId ? Number(values.empresaId) : null
+
+      //console.log('empresaId calculado:', empresaId, typeof empresaId)
+      //console.log('estado:', values.estado)
+
+      const { empresaId: _, ...alumnoData } = values
+
+        if (isEdit) {
+          //console.log('Llamando update con:', alumnoData)
+          await alumnoService.update(id, alumnoData)
+          //console.log('Update OK, llamando asignar con:', { empresaId, estado: values.estado })
+          await alumnoService.asignarEmpresa(id, {
+            empresaId: empresaId,
+            estado: values.estado
+          })
+          message.success('Alumno actualizado')
+        } else {
+        const { data } = await alumnoService.create(alumnoData)
+        await alumnoService.asignarEmpresa(data.id, {
+          empresaId: empresaId,
+          estado: values.estado
+        })
         message.success('Alumno creado')
       }
       navigate('/alumnos')
     } catch (err) {
+      //console.error('Error detallado:', err.response?.data)
       message.error(err.response?.data?.message || 'Error al guardar')
     } finally {
       setLoading(false)
@@ -118,7 +130,12 @@ export default function AlumnoForm() {
                 </Select>
               </Form.Item>
               <Form.Item name="empresaId" label="Empresa asignada">
-                <Select placeholder="Sin asignar" allowClear showSearch optionFilterProp="children">
+                <Select
+                  allowClear
+                  showSearch
+                  optionFilterProp="children"
+                  placeholder="Sin asignar"
+                >
                   {empresas.map(e => <Option key={e.id} value={e.id}>{e.nombre}</Option>)}
                 </Select>
               </Form.Item>

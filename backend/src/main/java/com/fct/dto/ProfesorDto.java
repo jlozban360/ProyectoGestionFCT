@@ -21,6 +21,7 @@ public class ProfesorDto {
         private String telefono;
         private Profesor.Rol rol = Profesor.Rol.COLABORADOR;
         private boolean activo = true;
+        private String tema;
     }
 
     @Data @Builder @NoArgsConstructor @AllArgsConstructor
@@ -31,6 +32,7 @@ public class ProfesorDto {
         private String telefono;
         private Profesor.Rol rol;
         private boolean activo;
+        private String tema;
         private LocalDateTime createdAt;
 
         public static Response from(Profesor p) {
@@ -42,6 +44,7 @@ public class ProfesorDto {
                     .rol(p.getRol())
                     .activo(p.isActivo())
                     .createdAt(p.getCreatedAt())
+                    .tema(p.getTema())
                     .build();
         }
     }
