@@ -4,6 +4,7 @@ import { Form, Input, Button, message, Typography } from 'antd'
 import { UserOutlined, LockOutlined } from '@ant-design/icons'
 import { authService } from '../services/api'
 import { useAuthStore } from '../store/authStore'
+import { useThemeStore } from '../store/themeStore'
 
 const { Title, Text } = Typography
 
@@ -11,12 +12,17 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
   const setAuth = useAuthStore(s => s.setAuth)
+  const setTema = useThemeStore(s => s.setTema)
 
   const onFinish = async ({ email, password }) => {
     setLoading(true)
     try {
       const { data } = await authService.login(email, password)
       setAuth(data.token, data.user)
+      // Restaurar el tema guardado del usuario
+      if (data.user?.tema) {
+        setTema(data.user.tema)
+      }
       message.success(`Bienvenido, ${data.user.nombre}`)
       navigate('/')
     } catch (err) {

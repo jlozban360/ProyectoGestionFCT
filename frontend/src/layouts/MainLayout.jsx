@@ -1,12 +1,14 @@
 import { useState } from 'react'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
-import { Layout, Menu, Avatar, Dropdown, Typography, Space } from 'antd'
+import { Layout, Menu, Avatar, Dropdown, Typography, Space, Tooltip } from 'antd'
 import {
   DashboardOutlined, BankOutlined, TeamOutlined, UserOutlined,
   PhoneOutlined, LogoutOutlined, MenuFoldOutlined, MenuUnfoldOutlined,
-  SettingOutlined
+  SettingOutlined, SunOutlined, MoonOutlined
 } from '@ant-design/icons'
 import { useAuthStore } from '../store/authStore'
+import { useThemeStore } from '../store/themeStore'
+import { profesorService } from '../services/api'
 import NotificacionesDrawer from '../components/NotificacionesDrawer'
 
 const { Sider, Header, Content } = Layout
@@ -25,6 +27,7 @@ export default function MainLayout() {
   const navigate = useNavigate()
   const location = useLocation()
   const { user, logout, isAdmin } = useAuthStore()
+  const { tema, toggleTema } = useThemeStore()
 
   const visibleItems = menuItems
     .filter(item => !item.adminOnly || isAdmin())
@@ -39,6 +42,22 @@ export default function MainLayout() {
   const handleUserMenu = ({ key }) => {
     if (key === 'logout') logout()
     if (key === 'perfil') navigate('/perfil')
+  }
+
+  const handleToggleTema = async () => {
+    const nuevoTema = tema === 'light' ? 'dark' : 'light'
+    toggleTema()
+    try {
+      await profesorService.update(user.id, {
+        nombre: user.nombre,
+        email: user.email,
+        rol: user.rol,
+        activo: true,
+        tema: nuevoTema,
+      })
+    } catch {
+      // si falla la sync con el servidor el tema local igual se aplica
+    }
   }
 
   const selectedKey = '/' + location.pathname.split('/')[1]
@@ -127,14 +146,15 @@ export default function MainLayout() {
 
       <Layout style={{ marginLeft: collapsed ? 80 : 240, transition: 'margin-left 0.2s' }}>
         <Header style={{
-          background: 'white',
+          background: tema === 'dark' ? '#141414' : 'white',
           padding: '0 24px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          borderBottom: '1px solid #e2e8f0',
+          borderBottom: `1px solid ${tema === 'dark' ? '#303030' : '#e2e8f0'}`,
           position: 'sticky', top: 0, zIndex: 99,
           height: 64,
+          transition: 'background 0.3s',
         }}>
           <div
             onClick={() => setCollapsed(!collapsed)}
@@ -143,6 +163,25 @@ export default function MainLayout() {
             {collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
           </div>
           <Space size={16}>
+            <Tooltip title={tema === 'light' ? 'Cambiar a modo oscuro' : 'Cambiar a modo claro'}>
+              <div
+                onClick={handleToggleTema}
+                style={{
+                  cursor: 'pointer',
+                  fontSize: 18,
+                  color: '#64748b',
+                  display: 'flex',
+                  alignItems: 'center',
+                  padding: '4px',
+                  borderRadius: 6,
+                  transition: 'color 0.2s',
+                }}
+                onMouseEnter={e => e.currentTarget.style.color = '#2563eb'}
+                onMouseLeave={e => e.currentTarget.style.color = '#64748b'}
+              >
+                {tema === 'light' ? <MoonOutlined /> : <SunOutlined />}
+              </div>
+            </Tooltip>
             <NotificacionesDrawer />
             <Dropdown menu={{ items: userMenuItems, onClick: handleUserMenu }}>
               <Avatar size={36} style={{ background: '#2563eb', cursor: 'pointer' }}>
@@ -152,7 +191,12 @@ export default function MainLayout() {
           </Space>
         </Header>
 
-        <Content style={{ padding: '24px', background: '#f8fafc', minHeight: 'calc(100vh - 64px)' }}>
+        <Content style={{
+          padding: '24px',
+          background: tema === 'dark' ? '#1f1f1f' : '#f8fafc',
+          minHeight: 'calc(100vh - 64px)',
+          transition: 'background 0.3s',
+        }}>
           <Outlet />
         </Content>
       </Layout>

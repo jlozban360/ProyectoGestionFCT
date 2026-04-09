@@ -1,13 +1,15 @@
 import { useState } from 'react'
-import { Form, Input, Button, Card, Typography, Row, Col, message, Avatar, Divider } from 'antd'
-import { UserOutlined, LockOutlined, SaveOutlined } from '@ant-design/icons'
+import { Form, Input, Button, Card, Typography, Row, Col, message, Avatar, Switch } from 'antd'
+import { UserOutlined, LockOutlined, SaveOutlined, SunOutlined, MoonOutlined } from '@ant-design/icons'
 import { useAuthStore } from '../../store/authStore'
+import { useThemeStore } from '../../store/themeStore'
 import { profesorService } from '../../services/api'
 
 const { Title, Text } = Typography
 
 export default function PerfilPage() {
   const { user, setAuth, token } = useAuthStore()
+  const { tema, setTema } = useThemeStore()
   const [formDatos] = Form.useForm()
   const [formPassword] = Form.useForm()
   const [loadingDatos, setLoadingDatos] = useState(false)
@@ -22,6 +24,7 @@ export default function PerfilPage() {
         telefono: values.telefono,
         rol: user.rol,
         activo: true,
+        tema: tema,
       })
       setAuth(token, data)
       message.success('Datos actualizados correctamente')
@@ -44,6 +47,7 @@ export default function PerfilPage() {
         email: user.email,
         rol: user.rol,
         activo: true,
+        tema: tema,
         password: values.nueva,
       })
       message.success('Contraseña actualizada correctamente')
@@ -55,11 +59,29 @@ export default function PerfilPage() {
     }
   }
 
+  const handleToggleTema = async () => {
+    const nuevoTema = tema === 'light' ? 'dark' : 'light'
+    setTema(nuevoTema)
+    try {
+      const { data } = await profesorService.update(user.id, {
+        nombre: user.nombre,
+        email: user.email,
+        rol: user.rol,
+        activo: true,
+        tema: nuevoTema,
+      })
+      setAuth(token, data)
+      message.success(`Tema ${nuevoTema === 'dark' ? 'oscuro' : 'claro'} activado`)
+    } catch {
+      message.error('Error al guardar preferencia de tema')
+    }
+  }
+
   return (
     <div>
       <div style={{ marginBottom: 24 }}>
         <Title level={3} style={{ margin: 0 }}>Mi perfil</Title>
-        <Text style={{ color: '#64748b' }}>Gestiona tus datos personales y contraseña</Text>
+        <Text style={{ color: '#64748b' }}>Gestiona tus datos personales y preferencias</Text>
       </div>
 
       <Row gutter={[16, 16]}>
@@ -77,8 +99,8 @@ export default function PerfilPage() {
               {user?.nombre?.[0]?.toUpperCase()}
             </Avatar>
             <div style={{ fontWeight: 700, fontSize: 18, marginBottom: 4 }}>{user?.nombre}</div>
-            <div style={{ color: '#64748b', marginBottom: 8 }}>{user?.email}</div>
-            <div>
+            <div style={{ color: '#64748b', marginBottom: 16 }}>{user?.email}</div>
+            <div style={{ marginBottom: 16 }}>
               <span style={{
                 background: user?.rol === 'ADMIN' ? '#f5f3ff' : '#eff6ff',
                 color: user?.rol === 'ADMIN' ? '#7c3aed' : '#2563eb',
@@ -86,6 +108,28 @@ export default function PerfilPage() {
               }}>
                 {user?.rol === 'ADMIN' ? 'Administrador' : 'Colaborador'}
               </span>
+            </div>
+
+            {/* Theme toggle */}
+            <div style={{
+              padding: '16px',
+              background: tema === 'dark' ? 'rgba(255,255,255,0.05)' : '#f8fafc',
+              borderRadius: 10,
+              border: '1px solid #e2e8f0',
+            }}>
+              <div style={{ marginBottom: 8, fontWeight: 500, fontSize: 13 }}>Apariencia</div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
+                <SunOutlined style={{ color: tema === 'light' ? '#d97706' : '#94a3b8', fontSize: 16 }} />
+                <Switch
+                  checked={tema === 'dark'}
+                  onChange={handleToggleTema}
+                  style={{ background: tema === 'dark' ? '#2563eb' : undefined }}
+                />
+                <MoonOutlined style={{ color: tema === 'dark' ? '#2563eb' : '#94a3b8', fontSize: 16 }} />
+              </div>
+              <div style={{ marginTop: 8, fontSize: 12, color: '#64748b' }}>
+                {tema === 'light' ? 'Modo claro activo' : 'Modo oscuro activo'}
+              </div>
             </div>
           </Card>
         </Col>

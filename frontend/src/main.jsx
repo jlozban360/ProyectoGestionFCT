@@ -1,15 +1,19 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import { ConfigProvider } from 'antd'
+import { ConfigProvider, theme } from 'antd'
 import esES from 'antd/locale/es_ES'
 import App from './App'
 import './index.css'
+import { useThemeStore } from './store/themeStore'
 
-ReactDOM.createRoot(document.getElementById('root')).render(
-  <React.StrictMode>
+function Root() {
+  const tema = useThemeStore(s => s.tema)
+
+  return (
     <ConfigProvider
       locale={esES}
       theme={{
+        algorithm: tema === 'dark' ? theme.darkAlgorithm : theme.defaultAlgorithm,
         token: {
           colorPrimary: '#2563eb',
           colorSuccess: '#16a34a',
@@ -28,5 +32,9 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     >
       <App />
     </ConfigProvider>
-  </React.StrictMode>
+  )
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <Root />
 )
