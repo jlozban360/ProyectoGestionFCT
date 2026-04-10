@@ -59,105 +59,147 @@ function lerpColor(a, b, t) {
   return `#${ch(a,b,1)}${ch(a,b,3)}${ch(a,b,5)}`
 }
 
-// ── Bar chart SVG nativo ───────────────────────────────────────────
+// ==================== BAR CHART - VERSIÓN CORREGIDA (Sin error selectedYear) ====================
 function BarChart({ data, colorScale, isDark, onBarClick }) {
-  const [ready,   setReady]   = useState(false)
   const [hovered, setHovered] = useState(null)
-  const [mouse,   setMouse]   = useState({ x: 0, y: 0 })
-
-  useEffect(() => {
-    setReady(false)
-    const id = requestAnimationFrame(() => requestAnimationFrame(() => setReady(true)))
-    return () => cancelAnimationFrame(id)
-  }, [data])
+  const [mouse, setMouse] = useState({ x: 0, y: 0 })
+  const [animReady, setAnimReady] = useState(false)
 
   const maxVal = Math.max(...data.map(d => d.contactos), 1)
-  const niceMax = (() => {
-    const steps = [1,2,5,10,20,50,100,200,500,1000]
-    return steps.find(s => s >= maxVal) ?? maxVal
-  })()
-  const TICKS  = 4
-  const VW = 560, VH = 190
-  const pad = { t: 16, r: 4, b: 28, l: 34 }
-  const cW  = VW - pad.l - pad.r
-  const cH  = VH - pad.t - pad.b
+
+  function getTickConfig(max) {
+    if (max <= 8)   return { count: 5, interval: 2 }
+    if (max <= 12)  return { count: 6, interval: 2 }
+    if (max <= 25)  return { count: 6, interval: 5 }
+    if (max <= 60)  return { count: 5, interval: 10 }
+    if (max <= 120) return { count: 5, interval: 25 }
+    if (max <= 300) return { count: 5, interval: 50 }
+    return { count: 5, interval: 100 }
+  }
+
+  const { count, interval } = getTickConfig(maxVal)
+  let niceMax = Math.ceil(maxVal / interval) * interval
+  if (niceMax < maxVal) niceMax += interval
+
+  const ticks = Array.from({ length: count }, (_, i) => i * interval)
+
+  const VW = 560
+  const VH = 160
+  const pad = { t: 16, r: 12, b: 26, l: 38 }
+  const cW = VW - pad.l - pad.r
+  const cH = VH - pad.t - pad.b
   const step = cW / data.length
   const barW = step * 0.95
   const barOff = (step - barW) / 2
-  const getColor = v => lerpColor(colorScale.min, colorScale.max, maxVal > 0 ? v / maxVal : 0)
-  const ticks = Array.from({ length: TICKS + 1 }, (_, i) => Math.round((niceMax / TICKS) * i))
+
+  const getColor = (v) =>
+    lerpColor(colorScale.min, colorScale.max, maxVal > 0 ? v / maxVal : 0)
+
+  // Animación corregida
+  useEffect(() => {
+    setAnimReady(false)
+    const timer = setTimeout(() => setAnimReady(true), 50)
+    return () => clearTimeout(timer)
+  }, [data])        // ← Solo dependemos de 'data', no de selectedYear
 
   return (
     <div style={{ position: 'relative' }} onMouseLeave={() => setHovered(null)}>
-      <svg viewBox={`0 0 ${VW} ${VH}`} width="100%" style={{ display: 'block', overflow: 'visible' }}>
+      <svg
+        viewBox={`0 0 ${VW} ${VH}`}
+        width="100%"
+        style={{ display: 'block', overflow: 'visible' }}
+      >
         <defs>
           {data.map((item, i) => {
             const c = getColor(item.contactos)
             return (
               <linearGradient key={i} id={`bcg-${i}`} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%"   stopColor={c} stopOpacity={1}    />
-                <stop offset="100%" stopColor={c} stopOpacity={0.45} />
+                <stop offset="0%" stopColor={c} stopOpacity={1} />
+                <stop offset="100%" stopColor={c} stopOpacity={0.55} />
               </linearGradient>
             )
           })}
         </defs>
 
-        {/* Eje Y — grid lines + etiquetas */}
-        {ticks.map(tick => {
+        {/* Grid + Eje Y */}
+        {ticks.map((tick, i) => {
           const y = pad.t + cH - (tick / niceMax) * cH
           return (
-            <g key={tick}>
-              <line x1={pad.l} y1={y} x2={VW - pad.r} y2={y}
-                    stroke={isDark ? '#3e3e42' : '#e2e8f0'}
-                    strokeWidth={tick === 0 ? 1 : 0.5}
-                    strokeDasharray={tick === 0 ? 'none' : '3 3'} />
-              <text x={pad.l - 5} y={y + 4} textAnchor="end" fontSize={9}
-                    fill={isDark ? '#555' : '#94a3b8'}>
+            <g key={i}>
+              <line
+                x1={pad.l} y1={y}
+                x2={VW - pad.r} y2={y}
+                stroke={isDark ? '#2f2f2f' : '#e5e7eb'}
+                strokeWidth={i === 0 ? 1 : 0.6}
+                strokeDasharray={i === 0 ? 'none' : '3 3'}
+              />
+              <text
+                x={pad.l - 8}
+                y={y + 4}
+                textAnchor="end"
+                fontSize={9}
+                fill={isDark ? '#777' : '#94a3b8'}
+              >
                 {tick}
               </text>
             </g>
           )
         })}
 
+        {/* Barras con animación */}
         {data.map((item, i) => {
-          const active   = hovered === i
-          const inactive = hovered !== null && !active
-          const bH  = (item.contactos / maxVal) * cH
-          const bX  = pad.l + i * step + barOff
-          const bY  = pad.t + cH - bH
+          const active = hovered === i
+          const bH = (item.contactos / niceMax) * cH || 0
+          const bX = pad.l + i * step + barOff
+          const bY = pad.t + cH - bH
 
           return (
-            <g key={i} style={{ cursor: 'pointer' }}
-               onMouseEnter={e => { setHovered(i); setMouse({ x: e.clientX, y: e.clientY }) }}
-               onMouseMove={e  => setMouse({ x: e.clientX, y: e.clientY })}
-               onClick={() => onBarClick?.(item)}
+            <g
+              key={i}
+              style={{ cursor: 'pointer' }}
+              onMouseEnter={(e) => {
+                setHovered(i)
+                setMouse({ x: e.clientX, y: e.clientY })
+              }}
+              onMouseMove={(e) => setMouse({ x: e.clientX, y: e.clientY })}
+              onClick={() => onBarClick?.(item)}
             >
               <rect
-                x={bX} y={bY} width={barW} height={bH} rx={4} ry={4}
+                x={bX}
+                y={bY}
+                width={barW}
+                height={bH}
+                rx={4}
                 fill={`url(#bcg-${i})`}
-                opacity={inactive ? 0.22 : 1}
+                opacity={hovered !== null && !active ? 0.35 : 1}
                 style={{
                   transformOrigin: `${bX + barW / 2}px ${pad.t + cH}px`,
-                  transform: `scaleY(${ready ? 1 : 0})`,
-                  transition: `transform 0.55s cubic-bezier(.34,1.3,.64,1) ${i * 38}ms, opacity 0.22s ease`,
+                  transform: `scaleY(${animReady ? 1 : 0})`,
+                  transition: 'transform 0.75s cubic-bezier(0.34, 1.56, 0.64, 1)'
                 }}
               />
+
               {item.contactos > 0 && (
-                <text x={bX + barW / 2} y={bY - 6}
-                      textAnchor="middle" fontSize={10} fontWeight={700}
-                      fill={active ? (isDark ? '#fff' : '#0f172a') : (isDark ? '#999' : '#64748b')}
-                      opacity={inactive ? 0.22 : (ready ? 1 : 0)}
-                      style={{ transition: 'opacity 0.3s ease, fill 0.2s ease' }}
+                <text
+                  x={bX + barW / 2}
+                  y={bY - 6}
+                  textAnchor="middle"
+                  fontSize={10}
+                  fontWeight={600}
+                  fill={isDark ? '#ddd' : '#1e293b'}
+                  style={{ opacity: animReady ? 1 : 0, transition: 'opacity 0.5s ease 0.3s' }}
                 >
                   {item.contactos}
                 </text>
               )}
-              <text x={bX + barW / 2} y={VH - 5}
-                    textAnchor="middle" fontSize={11}
-                    fontWeight={active ? 700 : 400}
-                    fill={active ? (isDark ? '#e0e0e0' : '#1e293b') : (isDark ? '#666' : '#94a3b8')}
-                    opacity={inactive ? 0.3 : 1}
-                    style={{ transition: 'opacity 0.2s ease, fill 0.2s ease' }}
+
+              <text
+                x={bX + barW / 2}
+                y={VH - 6}
+                textAnchor="middle"
+                fontSize={9.0}
+                fill={active ? (isDark ? '#fff' : '#111827') : (isDark ? '#666' : '#94a3b8')}
+                fontWeight={active ? 600 : 400}
               >
                 {item.mes}
               </text>
@@ -166,16 +208,24 @@ function BarChart({ data, colorScale, isDark, onBarClick }) {
         })}
       </svg>
 
+      {/* Tooltip */}
       {hovered !== null && (
-        <div style={{
-          position: 'fixed', left: mouse.x + 14, top: mouse.y - 20,
-          background: isDark ? '#2a2a2a' : '#fff',
-          border: `1px solid ${isDark ? '#444' : '#e2e8f0'}`,
-          borderRadius: 8, padding: '6px 12px', fontSize: 13,
-          color: isDark ? '#ccc' : '#1e293b', pointerEvents: 'none',
-          zIndex: 9999, boxShadow: '0 4px 14px rgba(0,0,0,0.18)', whiteSpace: 'nowrap',
-        }}>
-          Número de contactos: <strong>{data[hovered].contactos}</strong>
+        <div
+          style={{
+            position: 'fixed',
+            left: mouse.x + 12,
+            top: mouse.y - 20,
+            background: isDark ? '#1f1f1f' : '#fff',
+            border: `1px solid ${isDark ? '#444' : '#e5e7eb'}`,
+            borderRadius: 6,
+            padding: '6px 10px',
+            fontSize: 13,
+            boxShadow: '0 6px 16px rgba(0,0,0,0.2)',
+            zIndex: 1000,
+            pointerEvents: 'none',
+          }}
+        >
+          <strong>{data[hovered].contactos}</strong> contactos en {data[hovered].mes}
         </div>
       )}
     </div>
