@@ -14,23 +14,28 @@ export default function LoginPage() {
   const setAuth = useAuthStore(s => s.setAuth)
   const setTema = useThemeStore(s => s.setTema)
 
-  const onFinish = async ({ email, password }) => {
-    setLoading(true)
+  const onFinish = async (values) => {
+    setLoading(true);
     try {
-      const { data } = await authService.login(email, password)
-      setAuth(data.token, data.user)
-      // Restaurar el tema guardado del usuario
-      if (data.user?.tema) {
-        setTema(data.user.tema)
+      const response = await authService.login(values.email, values.password);
+      useAuthStore.getState().login(response.data);
+      navigate('/');
+    } catch (error) {
+      const status = error.response?.status;
+
+      if (status === 401) {
+        message.error("Credenciales incorrectas. Revisa tu email y contraseña.");
+      } 
+      else if (status >= 500 || !error.response) {
+        message.error("Error del servidor. El servicio no está disponible.");
+      } 
+      else {
+        message.error("Ocurrió un error inesperado.");
       }
-      message.success(`Bienvenido, ${data.user.nombre}`)
-      navigate('/')
-    } catch (err) {
-      message.error(err.response?.data?.message || 'Credenciales incorrectas')
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <div style={{

@@ -112,6 +112,11 @@ export default function NotificacionesDrawer() {
     }
   }
 
+  // Carga inicial al montar (para que el badge aparezca sin abrir el drawer)
+  useEffect(() => {
+    cargarNotificaciones()
+  }, [])
+
   useEffect(() => {
     if (open) cargarNotificaciones()
   }, [open])

@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { ConfigProvider, theme as antdTheme, App as AntdApp } from 'antd'
 import { useAuthStore } from './store/authStore'
 import MainLayout from './layouts/MainLayout'
 import LoginPage from './pages/LoginPage'
@@ -27,35 +28,73 @@ function AdminRoute({ children }) {
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/" element={
-          <PrivateRoute>
-            <MainLayout />
-          </PrivateRoute>
-        }>
-          <Route index element={<Dashboard />} />
-          <Route path="empresas" element={<EmpresasList />} />
-          <Route path="empresas/nueva" element={<EmpresaForm />} />
-          <Route path="empresas/:id" element={<EmpresaDetail />} />
-          <Route path="empresas/:id/editar" element={<EmpresaForm />} />
-          <Route path="alumnos" element={<AlumnosList />} />
-          <Route path="alumnos/nuevo" element={<AlumnoForm />} />
-          <Route path="alumnos/:id/editar" element={<AlumnoForm />} />
-          <Route path="profesores" element={
-            <AdminRoute><ProfesoresList /></AdminRoute>
-          } />
-          <Route path="profesores/nuevo" element={
-            <AdminRoute><ProfesorForm /></AdminRoute>
-          } />
-          <Route path="profesores/:id/editar" element={
-            <AdminRoute><ProfesorForm /></AdminRoute>
-          } />
-          <Route path="contactos" element={<ContactosList />} />
-          <Route path="perfil" element={<PerfilPage />} />
-        </Route>
-      </Routes>
+    <BrowserRouter 
+        future={{
+          v7_startTransition: true,
+          v7_relativeSplatPath: true
+        }}
+      >
+      <ConfigProvider
+        theme={{
+          algorithm: antdTheme.defaultAlgorithm,
+          token: {
+            colorPrimary: '#2563eb',
+            borderRadius: 8,
+            fontFamily: "'DM Sans', sans-serif",
+          },
+        }}
+      >
+        <AntdApp>
+          <Routes>
+            <Route path="/login" element={
+              <ConfigProvider
+                inherit={false}
+                theme={{
+                  algorithm: antdTheme.defaultAlgorithm,
+                  token: {
+                    colorPrimary: '#2563eb',
+                    colorBgContainer: '#ffffff',
+                    colorBgElevated: '#ffffff',
+                    colorBgBase: '#ffffff',
+                    colorText: 'rgba(0,0,0,0.88)',
+                    colorBorder: '#d9d9d9',
+                    borderRadius: 8,
+                    fontFamily: "'DM Sans', sans-serif",
+                  },
+                }}
+              >
+                <LoginPage />
+              </ConfigProvider>
+            } />
+
+            <Route path="/" element={
+              <PrivateRoute>
+                <MainLayout />
+              </PrivateRoute>
+            }>
+              <Route index element={<Dashboard />} />
+              <Route path="empresas" element={<EmpresasList />} />
+              <Route path="empresas/nueva" element={<EmpresaForm />} />
+              <Route path="empresas/:id" element={<EmpresaDetail />} />
+              <Route path="empresas/:id/editar" element={<EmpresaForm />} />
+              <Route path="alumnos" element={<AlumnosList />} />
+              <Route path="alumnos/nuevo" element={<AlumnoForm />} />
+              <Route path="alumnos/:id/editar" element={<AlumnoForm />} />
+              <Route path="profesores" element={
+                <AdminRoute><ProfesoresList /></AdminRoute>
+              } />
+              <Route path="profesores/nuevo" element={
+                <AdminRoute><ProfesorForm /></AdminRoute>
+              } />
+              <Route path="profesores/:id/editar" element={
+                <AdminRoute><ProfesorForm /></AdminRoute>
+              } />
+              <Route path="contactos" element={<ContactosList />} />
+              <Route path="perfil" element={<PerfilPage />} />
+            </Route>
+          </Routes>
+        </AntdApp>
+      </ConfigProvider>
     </BrowserRouter>
   )
 }
