@@ -4,7 +4,7 @@ import { Row, Col, Card, Typography, Table, Tag, Tabs } from 'antd'
 import {
   BankOutlined, PhoneOutlined, TeamOutlined, UserOutlined,
 } from '@ant-design/icons'
-import { Column, Pie } from '@ant-design/charts'
+// @ant-design/charts ya no se usa — gráficas SVG nativas
 import dayjs from 'dayjs'
 import { dashboardService, contactoService } from '../../services/api'
 import { useThemeStore } from '../../store/themeStore'
@@ -31,16 +31,6 @@ const mesNumero = {
   Jul: 7, Ago: 8, Sep: 9, Oct: 10, Nov: 11, Dic: 12,
 }
 
-// Intervalo de tick adaptado al máximo de la serie
-function calcTickInterval(max) {
-  if (max <= 5)   return 1
-  if (max <= 20)  return 5
-  if (max <= 50)  return 10
-  if (max <= 100) return 20
-  if (max <= 200) return 50
-  if (max <= 500) return 100
-  return Math.ceil(max / 5 / 100) * 100
-}
 
 const resultadoColors = {
   INTERESADO: 'green', PENDIENTE: 'orange', NO_INTERESADO: 'red', EN_PROCESO: 'blue',
@@ -55,15 +45,338 @@ const yearTabs = [currentYear - 2, currentYear - 1, currentYear].map(y => ({
   key: String(y), label: String(y),
 }))
 
-const CHART_COLORS = {
-  light: {
-    column: '#3b82f6',
-    pie: ['#3b82f6', '#16a34a', '#d97706', '#7c3aed'],
-  },
-  dark: {
-    column: '#60a5fa',
-    pie: ['#60a5fa', '#4ade80', '#fbbf24', '#a78bfa'],
-  },
+const PIE_COLORS = ['#3b82f6', '#16a34a', '#d97706', '#7c3aed']
+
+// Escala secuencial: color mínimo (valor bajo) → color máximo (valor alto)
+const COLOR_SCALE = {
+  light: { min: '#bfdbfe', max: '#1e3a8a' }, // azul claro → azul navy
+  dark:  { min: '#99f6e4', max: '#0f766e' }, // teal claro → teal oscuro
+}
+
+function lerpColor(a, b, t) {
+  const p = (h, s, e) => parseInt(h.slice(s, e), 16)
+  const ch = (ca, cb, i) => Math.round(p(ca,i,i+2) + (p(cb,i,i+2) - p(ca,i,i+2)) * t).toString(16).padStart(2,'0')
+  return `#${ch(a,b,1)}${ch(a,b,3)}${ch(a,b,5)}`
+}
+
+// ── Bar chart SVG nativo ───────────────────────────────────────────
+function BarChart({ data, colorScale, isDark, onBarClick }) {
+  const [ready,   setReady]   = useState(false)
+  const [hovered, setHovered] = useState(null)
+  const [mouse,   setMouse]   = useState({ x: 0, y: 0 })
+
+  useEffect(() => {
+    setReady(false)
+    const id = requestAnimationFrame(() => requestAnimationFrame(() => setReady(true)))
+    return () => cancelAnimationFrame(id)
+  }, [data])
+
+  const maxVal = Math.max(...data.map(d => d.contactos), 1)
+  const niceMax = (() => {
+    const steps = [1,2,5,10,20,50,100,200,500,1000]
+    return steps.find(s => s >= maxVal) ?? maxVal
+  })()
+  const TICKS  = 4
+  const VW = 560, VH = 190
+  const pad = { t: 16, r: 4, b: 28, l: 34 }
+  const cW  = VW - pad.l - pad.r
+  const cH  = VH - pad.t - pad.b
+  const step = cW / data.length
+  const barW = step * 0.95
+  const barOff = (step - barW) / 2
+  const getColor = v => lerpColor(colorScale.min, colorScale.max, maxVal > 0 ? v / maxVal : 0)
+  const ticks = Array.from({ length: TICKS + 1 }, (_, i) => Math.round((niceMax / TICKS) * i))
+
+  return (
+    <div style={{ position: 'relative' }} onMouseLeave={() => setHovered(null)}>
+      <svg viewBox={`0 0 ${VW} ${VH}`} width="100%" style={{ display: 'block', overflow: 'visible' }}>
+        <defs>
+          {data.map((item, i) => {
+            const c = getColor(item.contactos)
+            return (
+              <linearGradient key={i} id={`bcg-${i}`} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%"   stopColor={c} stopOpacity={1}    />
+                <stop offset="100%" stopColor={c} stopOpacity={0.45} />
+              </linearGradient>
+            )
+          })}
+        </defs>
+
+        {/* Eje Y — grid lines + etiquetas */}
+        {ticks.map(tick => {
+          const y = pad.t + cH - (tick / niceMax) * cH
+          return (
+            <g key={tick}>
+              <line x1={pad.l} y1={y} x2={VW - pad.r} y2={y}
+                    stroke={isDark ? '#3e3e42' : '#e2e8f0'}
+                    strokeWidth={tick === 0 ? 1 : 0.5}
+                    strokeDasharray={tick === 0 ? 'none' : '3 3'} />
+              <text x={pad.l - 5} y={y + 4} textAnchor="end" fontSize={9}
+                    fill={isDark ? '#555' : '#94a3b8'}>
+                {tick}
+              </text>
+            </g>
+          )
+        })}
+
+        {data.map((item, i) => {
+          const active   = hovered === i
+          const inactive = hovered !== null && !active
+          const bH  = (item.contactos / maxVal) * cH
+          const bX  = pad.l + i * step + barOff
+          const bY  = pad.t + cH - bH
+
+          return (
+            <g key={i} style={{ cursor: 'pointer' }}
+               onMouseEnter={e => { setHovered(i); setMouse({ x: e.clientX, y: e.clientY }) }}
+               onMouseMove={e  => setMouse({ x: e.clientX, y: e.clientY })}
+               onClick={() => onBarClick?.(item)}
+            >
+              <rect
+                x={bX} y={bY} width={barW} height={bH} rx={4} ry={4}
+                fill={`url(#bcg-${i})`}
+                opacity={inactive ? 0.22 : 1}
+                style={{
+                  transformOrigin: `${bX + barW / 2}px ${pad.t + cH}px`,
+                  transform: `scaleY(${ready ? 1 : 0})`,
+                  transition: `transform 0.55s cubic-bezier(.34,1.3,.64,1) ${i * 38}ms, opacity 0.22s ease`,
+                }}
+              />
+              {item.contactos > 0 && (
+                <text x={bX + barW / 2} y={bY - 6}
+                      textAnchor="middle" fontSize={10} fontWeight={700}
+                      fill={active ? (isDark ? '#fff' : '#0f172a') : (isDark ? '#999' : '#64748b')}
+                      opacity={inactive ? 0.22 : (ready ? 1 : 0)}
+                      style={{ transition: 'opacity 0.3s ease, fill 0.2s ease' }}
+                >
+                  {item.contactos}
+                </text>
+              )}
+              <text x={bX + barW / 2} y={VH - 5}
+                    textAnchor="middle" fontSize={11}
+                    fontWeight={active ? 700 : 400}
+                    fill={active ? (isDark ? '#e0e0e0' : '#1e293b') : (isDark ? '#666' : '#94a3b8')}
+                    opacity={inactive ? 0.3 : 1}
+                    style={{ transition: 'opacity 0.2s ease, fill 0.2s ease' }}
+              >
+                {item.mes}
+              </text>
+            </g>
+          )
+        })}
+      </svg>
+
+      {hovered !== null && (
+        <div style={{
+          position: 'fixed', left: mouse.x + 14, top: mouse.y - 20,
+          background: isDark ? '#2a2a2a' : '#fff',
+          border: `1px solid ${isDark ? '#444' : '#e2e8f0'}`,
+          borderRadius: 8, padding: '6px 12px', fontSize: 13,
+          color: isDark ? '#ccc' : '#1e293b', pointerEvents: 'none',
+          zIndex: 9999, boxShadow: '0 4px 14px rgba(0,0,0,0.18)', whiteSpace: 'nowrap',
+        }}>
+          Número de contactos: <strong>{data[hovered].contactos}</strong>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── Donut chart SVG nativo ─────────────────────────────────────────
+function arcPath(cx, cy, R, r, a0, a1) {
+  const x = (a, rad) => cx + Math.cos(a) * rad
+  const y = (a, rad) => cy + Math.sin(a) * rad
+  const large = a1 - a0 > Math.PI ? 1 : 0
+  return [
+    `M ${x(a0,R)} ${y(a0,R)}`,
+    `A ${R} ${R} 0 ${large} 1 ${x(a1,R)} ${y(a1,R)}`,
+    `L ${x(a1,r)} ${y(a1,r)}`,
+    `A ${r} ${r} 0 ${large} 0 ${x(a0,r)} ${y(a0,r)}`,
+    'Z',
+  ].join(' ')
+}
+
+function DonutChart({ data, colors, isDark, onSliceClick }) {
+  const [hovered, setHovered] = useState(null)
+  const [mouse, setMouse] = useState({ x: 0, y: 0 })
+  const [anim, setAnim] = useState(0)
+
+  useEffect(() => {
+    requestAnimationFrame(() => setAnim(1))
+  }, [])
+
+  const total = data.reduce((s, d) => s + d.value, 0)
+
+  const SIZE = 240
+  const cx = SIZE / 2
+  const cy = SIZE / 2
+  const outerR = SIZE * 0.44
+  const innerR = outerR * 0.58
+
+  function arcPath(cx, cy, R, r, a0, a1) {
+    const x = (a, rad) => cx + Math.cos(a) * rad
+    const y = (a, rad) => cy + Math.sin(a) * rad
+    const large = a1 - a0 > Math.PI ? 1 : 0
+    return [
+      `M ${x(a0, R)} ${y(a0, R)}`,
+      `A ${R} ${R} 0 ${large} 1 ${x(a1, R)} ${y(a1, R)}`,
+      `L ${x(a1, r)} ${y(a1, r)}`,
+      `A ${r} ${r} 0 ${large} 0 ${x(a0, r)} ${y(a0, r)}`,
+      'Z',
+    ].join(' ')
+  }
+
+  let acc = -Math.PI / 2
+
+  const slices = data.map((item, i) => {
+    const sweep =
+      total > 0
+        ? (item.value / total) * Math.PI * 2
+        : (Math.PI * 2) / data.length
+
+    const a0 = acc
+    acc += sweep
+
+    return {
+      d: arcPath(cx, cy, outerR, innerR, a0, acc),
+      mid: a0 + sweep / 2,
+      color: colors[i % colors.length],
+      item,
+      i,
+    }
+  })
+
+  return (
+    <div>
+      <div style={{ display: 'flex', justifyContent: 'center' }}>
+        <svg
+          width={SIZE}
+          height={SIZE}
+          onMouseLeave={() => setHovered(null)}
+        >
+          {/* 🎯 Gradientes */}
+          <defs>
+            {slices.map(({ color }, i) => (
+              <linearGradient
+                id={`grad-${i}`}
+                key={i}
+                x1="0"
+                y1="0"
+                x2="1"
+                y2="1"
+              >
+                <stop offset="0%" stopColor={color} />
+                <stop offset="100%" stopColor="#00000020" />
+              </linearGradient>
+            ))}
+          </defs>
+
+          {/* 🎯 Centro (peso visual) */}
+          <circle
+            cx={cx}
+            cy={cy}
+            r={innerR - 4}
+            fill={isDark ? '#1f1f1f' : '#f8fafc'}
+          />
+
+          {slices.map(({ d, mid, item, i }) => {
+            const active = hovered === i
+            const inactive = hovered !== null && !active
+
+            const off = active ? 14 : 0
+
+            return (
+              <path
+                key={i}
+                d={d}
+                fill={`url(#grad-${i})`}
+                stroke={active ? '#fff' : 'none'}
+                strokeWidth={3}
+                opacity={inactive ? 0.28 : 1}
+                transform={`
+                  translate(${Math.cos(mid) * off}, ${Math.sin(mid) * off})
+                  scale(${anim})
+                `}
+                style={{
+                  transformOrigin: `${cx}px ${cy}px`,
+                  cursor: 'pointer',
+                  transition:
+                    'transform 0.25s cubic-bezier(.34,1.56,.64,1), opacity 0.2s ease',
+                }}
+                onMouseEnter={(e) => {
+                  setHovered(i)
+                  setMouse({ x: e.clientX, y: e.clientY })
+                }}
+                onMouseMove={(e) =>
+                  setMouse({ x: e.clientX, y: e.clientY })
+                }
+                onClick={() => onSliceClick?.(item)}
+              />
+            )
+          })}
+        </svg>
+      </div>
+
+      {/* 💬 Tooltip */}
+      {hovered !== null && (
+        <div
+          style={{
+            position: 'fixed',
+            left: mouse.x + 14,
+            top: mouse.y - 20,
+            background: isDark ? '#2a2a2a' : '#fff',
+            border: `1px solid ${isDark ? '#444' : '#e2e8f0'}`,
+            borderRadius: 8,
+            padding: '6px 12px',
+            fontSize: 13,
+            color: isDark ? '#ccc' : '#1e293b',
+            pointerEvents: 'none',
+            zIndex: 9999,
+            boxShadow: '0 6px 20px rgba(0,0,0,0.2)',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          <strong>{slices[hovered].item.type}</strong>
+          {' · '}
+          {slices[hovered].item.value} alumno
+          {slices[hovered].item.value !== 1 ? 's' : ''}
+        </div>
+      )}
+
+      {/* 🧠 Leyenda interactiva */}
+      <div
+        style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          justifyContent: 'center',
+          gap: '4px 12px',
+          marginTop: 8,
+        }}
+      >
+        {data.map((item, i) => (
+          <div
+            key={i}
+            onMouseEnter={() => setHovered(i)}
+            onMouseLeave={() => setHovered(null)}
+            onClick={() => onSliceClick?.(item)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 5,
+              fontSize: 11,
+              color: isDark ? '#888' : '#64748b',
+              cursor: 'pointer',
+              opacity: hovered !== null && hovered !== i ? 0.4 : 1,
+              transition: 'opacity 0.2s',
+            }}
+          >
+            <div style={{ width: 8, height: 8, borderRadius: 2, background: colors[i % colors.length], flexShrink: 0 }} />
+            {item.type}
+          </div>
+        ))}
+      </div>
+    </div>
+  )
 }
 
 export default function Dashboard() {
@@ -134,70 +447,7 @@ export default function Dashboard() {
     }
   }
 
-  // ── Configs de gráficas ────────────────────────────────────────────
-
-  const maxContactos = Math.max(...contactosMes.map(c => c.contactos), 1)
-  const tickInterval = calcTickInterval(maxContactos)
-
-  const themeColors = isDark ? CHART_COLORS.dark : CHART_COLORS.light
-
-  const columnChartConfig = {
-    data: contactosMes,
-    xField: 'mes',
-    yField: 'contactos',
-    color: themeColors.column,
-    radius: [4, 4, 0, 0],
-    height: 240,
-    theme: isDark ? 'dark' : 'light',
-    axis: {
-      y: { tickInterval, nice: true },
-    },
-    style: { cursor: 'pointer' },
-  }
-
-  const pieChartConfig = {
-    data: necesidades,
-    angleField: 'value',
-    colorField: 'type',
-    radius: 0.82,
-    innerRadius: 0.5,
-    height: 240,
-    color: themeColors.pie,
-    theme: isDark ? 'dark' : 'light',
-    legend: { position: 'bottom' },
-    label: {
-      text: (d) => d.type,
-      style: { fontSize: 11, fill: isDark ? '#c0c0c0' : '#444', fontWeight: 600 },
-    },
-    tooltip: {
-      items: [(d) => ({ name: d.type, value: `${d.value} alumno${d.value !== 1 ? 's' : ''}` })],
-    },
-    state: {
-      active: {
-        style: { offset: 10, stroke: isDark ? '#6b7280' : '#ffffff', strokeWidth: 2 },
-      },
-    },
-    interactions: [{ type: 'element-active' }],
-    style: { cursor: 'pointer' },
-  }
-
-  // ── Handlers de click en gráficas ─────────────────────────────────
-
-  const handleColumnReady = (chart) => {
-    chart.on('element:click', (evt) => {
-      const d = evt.data?.data
-      if (!d) return
-      const mes = mesNumero[d.mes]
-      if (mes) navigate(`/contactos?mes=${mes}&year=${selectedYear}`)
-    })
-  }
-
-  const handlePieReady = (chart) => {
-    chart.on('element:click', (evt) => {
-      const d = evt.data?.data
-      if (d?.type) navigate(`/alumnos?ciclo=${d.type}&noDisponible=1`)
-    })
-  }
+  const colorScale = isDark ? COLOR_SCALE.dark : COLOR_SCALE.light
 
   // ── Columnas tabla ─────────────────────────────────────────────────
 
@@ -285,17 +535,22 @@ export default function Dashboard() {
             }
           >
             {loadingChart ? (
-              <div style={{ height: 240, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div style={{ height: 230, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <Text style={{ color: colors.textMuted }}>Cargando...</Text>
               </div>
             ) : loaded && hayContactos ? (
-              <Column
-                key={`col-${tema}-${selectedYear}`}
-                {...columnChartConfig}
-                onReady={handleColumnReady}
+              <BarChart
+                key={`bar-${tema}-${selectedYear}`}
+                data={contactosMes}
+                colorScale={colorScale}
+                isDark={isDark}
+                onBarClick={item => {
+                  const mes = mesNumero[item.mes]
+                  if (mes) navigate(`/contactos?mes=${mes}&year=${selectedYear}`)
+                }}
               />
             ) : loaded ? (
-              <div style={{ height: 240, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div style={{ height: 230, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <Text style={{ color: colors.textMuted }}>No hay contactos en {selectedYear}</Text>
               </div>
             ) : null}
@@ -310,10 +565,12 @@ export default function Dashboard() {
             styles={{ body: { paddingTop: 8 } }}
           >
             {loaded && necesidades.length > 0 ? (
-              <Pie
+              <DonutChart
                 key={`pie-${tema}`}
-                {...pieChartConfig}
-                onReady={handlePieReady}
+                data={necesidades}
+                colors={PIE_COLORS}
+                isDark={isDark}
+                onSliceClick={(item) => navigate(`/alumnos?ciclo=${item.type}&noDisponible=1`)}
               />
             ) : loaded ? (
               <div style={{ height: 240, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
