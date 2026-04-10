@@ -49,5 +49,5 @@ public class Contacto {
 
     public enum TipoContacto { LLAMADA, EMAIL, VISITA }
 
-    public enum ResultadoContacto { INTERESADO, PENDIENTE, NO_INTERESADO, EN_PROCESO }
+    public enum ResultadoContacto { INTERESADO, PENDIENTE, NO_INTERESADO, EN_PROCESO, HECHO, DESCARTADO }
 }

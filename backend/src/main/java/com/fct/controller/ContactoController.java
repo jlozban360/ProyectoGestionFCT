@@ -1,6 +1,7 @@
 package com.fct.controller;
 
 import com.fct.dto.ContactoDto;
+import com.fct.entity.Contacto;
 import com.fct.entity.Profesor;
 import com.fct.service.ContactoService;
 import jakarta.validation.Valid;
@@ -53,6 +54,15 @@ public class ContactoController {
             @Valid @RequestBody ContactoDto.Request req
     ) {
         return ResponseEntity.ok(contactoService.update(id, req));
+    }
+
+    @PatchMapping("/{id}/resultado")
+    public ResponseEntity<ContactoDto.Response> patchResultado(
+            @PathVariable Long id,
+            @RequestParam String resultado
+    ) {
+        Contacto.ResultadoContacto r = Contacto.ResultadoContacto.valueOf(resultado.toUpperCase());
+        return ResponseEntity.ok(contactoService.patchResultado(id, r));
     }
 
     @DeleteMapping("/{id}")

@@ -18,29 +18,12 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (!error.response) { // Backend apagado, sin conexión, timeout...
-      message.error("No se pudo conectar con el servidor. Asegúrate de que el backend esté encendido.");
-      useAuthStore.getState().logout();
-      return Promise.reject(error);
+    if (error.response?.status === 401) {
+      useAuthStore.getState().logout()
     }
-
-    const status = error.response.status;
-
-    // Errores graves del servidor → mostrar mensaje claro + logout
-    if (status >= 500 || [502, 503, 504].includes(status)) {
-      message.error("Error interno del servidor. Inténtalo de nuevo más tarde.");
-      useAuthStore.getState().logout();
-      return Promise.reject(error);
-    }
-
-    // No hacemos logout aquí si es intento de login
-    if (status === 401) {
-      return Promise.reject(error);
-    }
-
-    return Promise.reject(error);
+    return Promise.reject(error)
   }
-);
+)
 
 export default api
 
@@ -67,6 +50,7 @@ export const contactoService = {
   getById: (id) => api.get(`/contactos/${id}`),
   create: (data) => api.post('/contactos', data),
   update: (id, data) => api.put(`/contactos/${id}`, data),
+  patchResultado: (id, resultado) => api.patch(`/contactos/${id}/resultado`, null, { params: { resultado } }),
   delete: (id) => api.delete(`/contactos/${id}`),
 }
 

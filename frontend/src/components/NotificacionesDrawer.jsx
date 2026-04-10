@@ -19,43 +19,41 @@ function calcularNotificaciones(contactos, alumnos) {
   const notifs = []
   const hoy = dayjs()
 
-  // Contactos pendientes con más de 7 días sin actualizar
+  // Contactos pendientes o en proceso
   contactos.forEach(c => {
-    if (c.resultado === 'PENDIENTE') {
+    if (c.resultado === 'PENDIENTE' || c.resultado === 'EN_PROCESO') {
       const dias = hoy.diff(dayjs(c.fecha), 'day')
-      if (dias >= 7) {
-        notifs.push({
-          id: `contacto-${c.id}`,
-          tipo: 'pendiente',
-          titulo: `Seguimiento pendiente — ${c.empresaNombre || c.empresa?.nombre}`,
-          descripcion: c.motivo,
-          fecha: c.fecha,
-          dias,
-          empresaId: c.empresaId,
-          icon: <PhoneOutlined />,
-          color: 'orange',
-        })
-      }
+      notifs.push({
+        id: `contacto-${c.id}`,
+        tipo: 'pendiente',
+        titulo: `Seguimiento pendiente — ${c.empresaNombre || c.empresa?.nombre}`,
+        descripcion: c.motivo,
+        fecha: c.fecha,
+        dias,
+        empresaId: c.empresaId,
+        contactoId: c.id,
+        icon: <PhoneOutlined />,
+        color: 'orange',
+      })
     }
   })
 
-  // Contactos con próxima acción definida y fecha ya pasada
+  // Contactos con próxima acción definida
   contactos.forEach(c => {
-    if (c.proximaAccion && c.resultado !== 'INTERESADO' && c.resultado !== 'NO_INTERESADO') {
+    if (c.proximaAccion && (c.resultado === 'PENDIENTE' || c.resultado === 'EN_PROCESO')) {
       const dias = hoy.diff(dayjs(c.fecha), 'day')
-      if (dias >= 3) {
-        notifs.push({
-          id: `accion-${c.id}`,
-          tipo: 'accion',
-          titulo: `Acción pendiente — ${c.empresaNombre || c.empresa?.nombre}`,
-          descripcion: c.proximaAccion,
-          fecha: c.fecha,
-          dias,
-          empresaId: c.empresaId,
-          icon: <ClockCircleOutlined />,
-          color: 'blue',
-        })
-      }
+      notifs.push({
+        id: `accion-${c.id}`,
+        tipo: 'accion',
+        titulo: `Acción pendiente — ${c.empresaNombre || c.empresa?.nombre}`,
+        descripcion: c.proximaAccion,
+        fecha: c.fecha,
+        dias,
+        empresaId: c.empresaId,
+        contactoId: c.id,
+        icon: <ClockCircleOutlined />,
+        color: 'blue',
+      })
     }
   })
 
@@ -222,14 +220,12 @@ export default function NotificacionesDrawer() {
                     }}>
                       {notif.descripcion}
                     </Text>
-                    {notif.dias >= 14 && (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 4 }}>
-                        <WarningOutlined style={{ color: '#dc2626', fontSize: 11 }} />
-                        <Text style={{ fontSize: 11, color: '#dc2626' }}>
-                          Lleva {notif.dias} días sin atender
-                        </Text>
-                      </div>
-                    )}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 4 }}>
+                      <WarningOutlined style={{ color: '#dc2626', fontSize: 11 }} />
+                      <Text style={{ fontSize: 11, color: '#dc2626' }}>
+                        Lleva {notif.dias} día{notif.dias !== 1 ? 's' : ''} sin atender
+                      </Text>
+                    </div>
                   </div>
                 </div>
               </List.Item>

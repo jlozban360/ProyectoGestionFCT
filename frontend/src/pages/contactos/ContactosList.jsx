@@ -14,7 +14,7 @@ const { Title, Text } = Typography
 const { Option } = Select
 const { TextArea } = Input
 
-const resultadoColors = { INTERESADO: 'green', PENDIENTE: 'orange', NO_INTERESADO: 'red', EN_PROCESO: 'blue' }
+const resultadoColors = { INTERESADO: 'green', PENDIENTE: 'orange', NO_INTERESADO: 'red', EN_PROCESO: 'blue', HECHO: 'cyan', DESCARTADO: 'default' }
 const tipoIcons = { LLAMADA: <PhoneOutlined />, EMAIL: <MailOutlined />, VISITA: <EnvironmentOutlined /> }
 
 export default function ContactosList() {
@@ -163,10 +163,12 @@ export default function ContactosList() {
           </Col>
           <Col>
             <Select placeholder="Resultado" style={{ width: 160 }} allowClear onChange={setResultadoFilter}>
-              <Option value="INTERESADO">✅ Interesado</Option>
               <Option value="PENDIENTE">⏳ Pendiente</Option>
-              <Option value="NO_INTERESADO">❌ No interesado</Option>
               <Option value="EN_PROCESO">🔄 En proceso</Option>
+              <Option value="INTERESADO">✅ Interesado</Option>
+              <Option value="NO_INTERESADO">❌ No interesado</Option>
+              <Option value="HECHO">✔️ Hecho</Option>
+              <Option value="DESCARTADO">🚫 Descartado</Option>
             </Select>
           </Col>
         </Row>
@@ -217,10 +219,12 @@ export default function ContactosList() {
             <Col span={12}>
               <Form.Item name="resultado" label="Resultado" rules={[{ required: true }]}>
                 <Select>
-                  <Option value="INTERESADO">✅ Interesado</Option>
                   <Option value="PENDIENTE">⏳ Pendiente</Option>
-                  <Option value="NO_INTERESADO">❌ No interesado</Option>
                   <Option value="EN_PROCESO">🔄 En proceso</Option>
+                  <Option value="INTERESADO">✅ Interesado</Option>
+                  <Option value="NO_INTERESADO">❌ No interesado</Option>
+                  <Option value="HECHO">✔️ Hecho</Option>
+                  <Option value="DESCARTADO">🚫 Descartado</Option>
                 </Select>
               </Form.Item>
             </Col>

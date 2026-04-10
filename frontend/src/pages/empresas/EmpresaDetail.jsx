@@ -16,11 +16,45 @@ const { Title, Text } = Typography
 const { TextArea } = Input
 const { Option } = Select
 
+const ESTADOS_FINALES = ['INTERESADO', 'NO_INTERESADO', 'HECHO', 'DESCARTADO']
+
 const resultadoColors = {
-  INTERESADO: 'green', PENDIENTE: 'orange', NO_INTERESADO: 'red', EN_PROCESO: 'blue',
+  INTERESADO: 'green', PENDIENTE: 'orange', NO_INTERESADO: 'red',
+  EN_PROCESO: 'blue', HECHO: 'cyan', DESCARTADO: 'default',
 }
+
+const resultadoLabel = {
+  INTERESADO: 'Interesado', PENDIENTE: 'Pendiente', NO_INTERESADO: 'No interesado',
+  EN_PROCESO: 'En proceso', HECHO: 'Hecho', DESCARTADO: 'Descartado',
+}
+
+// Opciones disponibles según estado actual (siempre hacia adelante)
+const siguientesEstados = {
+  PENDIENTE: [
+    { value: 'EN_PROCESO', label: '🔄 En proceso' },
+    { value: 'INTERESADO', label: '✅ Interesado' },
+    { value: 'NO_INTERESADO', label: '❌ No interesado' },
+    { value: 'HECHO', label: '✔️ Hecho' },
+    { value: 'DESCARTADO', label: '🚫 Descartado' },
+  ],
+  EN_PROCESO: [
+    { value: 'INTERESADO', label: '✅ Interesado' },
+    { value: 'NO_INTERESADO', label: '❌ No interesado' },
+    { value: 'HECHO', label: '✔️ Hecho' },
+    { value: 'DESCARTADO', label: '🚫 Descartado' },
+  ],
+}
+
 const tipoIcons = {
   LLAMADA: <PhoneOutlined />, EMAIL: <MailOutlined />, VISITA: <EnvironmentOutlined />,
+}
+
+function ordenarContactos(contactos) {
+  const activos = contactos.filter(c => !ESTADOS_FINALES.includes(c.resultado))
+    .sort((a, b) => dayjs(b.fecha).unix() - dayjs(a.fecha).unix())
+  const finales = contactos.filter(c => ESTADOS_FINALES.includes(c.resultado))
+    .sort((a, b) => dayjs(b.fecha).unix() - dayjs(a.fecha).unix())
+  return [...activos, ...finales]
 }
 
 export default function EmpresaDetail() {
@@ -102,6 +136,17 @@ export default function EmpresaDetail() {
       setAlumnos(data)
     } catch {
       message.error('Error al asignar alumno')
+    }
+  }
+
+  const handleAvanzarEstado = async (contactoId, nuevoResultado) => {
+    try {
+      await contactoService.patchResultado(contactoId, nuevoResultado)
+      const { data } = await empresaService.getContactos(id)
+      setContactos(data)
+      message.success(`Estado actualizado a "${resultadoLabel[nuevoResultado]}"`)
+    } catch {
+      message.error('Error al actualizar el estado')
     }
   }
 
@@ -202,40 +247,62 @@ export default function EmpresaDetail() {
                       {contactos.length === 0
                         ? <Text type="secondary">No hay contactos registrados aún</Text>
                         : (
-                          <Timeline items={contactos.map(c => ({
-                            color: resultadoColors[c.resultado] || 'blue',
-                            dot: tipoIcons[c.tipo],
-                            children: (
-                              <div style={{
-                                background: itemBg,
-                                borderRadius: 10,
-                                padding: '12px 16px',
-                                border: `1px solid ${itemBorder}`,
-                              }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                                  <Space>
-                                    <Tag>{c.tipo}</Tag>
-                                    <Tag color={resultadoColors[c.resultado]}>{c.resultado?.replace('_', ' ')}</Tag>
-                                  </Space>
-                                  <Text type="secondary" style={{ fontSize: 12 }}>
-                                    {dayjs(c.fecha).format('DD MMM YYYY')}
-                                  </Text>
-                                </div>
-                                <div style={{ fontWeight: 500, marginBottom: 4 }}>{c.motivo}</div>
-                                {c.necesidades && (
-                                  <div style={{ fontSize: 13, marginBottom: 4 }}>
-                                    <Text type="secondary"><strong>Necesidades:</strong> {c.necesidades}</Text>
+                          <Timeline items={ordenarContactos(contactos).map(c => {
+                            const esFinal = ESTADOS_FINALES.includes(c.resultado)
+                            const opciones = siguientesEstados[c.resultado] || []
+                            return {
+                              color: resultadoColors[c.resultado] || 'blue',
+                              dot: tipoIcons[c.tipo],
+                              children: (
+                                <div style={{
+                                  background: itemBg,
+                                  borderRadius: 10,
+                                  padding: '12px 16px',
+                                  border: `1px solid ${esFinal ? itemBorder : (c.resultado === 'PENDIENTE' ? '#fed7aa' : '#bfdbfe')}`,
+                                  opacity: esFinal ? 0.75 : 1,
+                                }}>
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                                    <Space>
+                                      <Tag>{c.tipo}</Tag>
+                                      <Tag color={resultadoColors[c.resultado]}>
+                                        {resultadoLabel[c.resultado] || c.resultado}
+                                      </Tag>
+                                    </Space>
+                                    <Text type="secondary" style={{ fontSize: 12 }}>
+                                      {dayjs(c.fecha).format('DD MMM YYYY')}
+                                    </Text>
                                   </div>
-                                )}
-                                {c.proximaAccion && (
-                                  <div style={{ fontSize: 13, color: '#2563eb' }}>→ {c.proximaAccion}</div>
-                                )}
-                                <Text type="secondary" style={{ fontSize: 11, display: 'block', marginTop: 6 }}>
-                                  Por {c.profesor?.nombre}
-                                </Text>
-                              </div>
-                            ),
-                          }))} />
+                                  <div style={{ fontWeight: 500, marginBottom: 4 }}>{c.motivo}</div>
+                                  {c.necesidades && (
+                                    <div style={{ fontSize: 13, marginBottom: 4 }}>
+                                      <Text type="secondary"><strong>Necesidades:</strong> {c.necesidades}</Text>
+                                    </div>
+                                  )}
+                                  {c.proximaAccion && (
+                                    <div style={{ fontSize: 13, color: '#2563eb', marginBottom: 4 }}>
+                                      → {c.proximaAccion}
+                                    </div>
+                                  )}
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 6 }}>
+                                    <Text type="secondary" style={{ fontSize: 11 }}>
+                                      Por {c.profesor?.nombre}
+                                    </Text>
+                                    {!esFinal && (
+                                      <Select
+                                        size="small"
+                                        placeholder="Actualizar estado"
+                                        style={{ width: 180 }}
+                                        value={null}
+                                        onChange={(val) => handleAvanzarEstado(c.id, val)}
+                                        options={opciones}
+                                        popupMatchSelectWidth={false}
+                                      />
+                                    )}
+                                  </div>
+                                </div>
+                              ),
+                            }
+                          })} />
                         )
                       }
                     </div>
@@ -301,10 +368,12 @@ export default function EmpresaDetail() {
           </Form.Item>
           <Form.Item name="resultado" label="Resultado" rules={[{ required: true }]}>
             <Select>
-              <Option value="INTERESADO">✅ Interesado</Option>
-              <Option value="PENDIENTE">⏳ Pendiente de respuesta</Option>
-              <Option value="NO_INTERESADO">❌ No interesado</Option>
+              <Option value="PENDIENTE">⏳ Pendiente</Option>
               <Option value="EN_PROCESO">🔄 En proceso</Option>
+              <Option value="INTERESADO">✅ Interesado</Option>
+              <Option value="NO_INTERESADO">❌ No interesado</Option>
+              <Option value="HECHO">✔️ Hecho</Option>
+              <Option value="DESCARTADO">🚫 Descartado</Option>
             </Select>
           </Form.Item>
           <Form.Item name="necesidades" label="Necesidades detectadas">

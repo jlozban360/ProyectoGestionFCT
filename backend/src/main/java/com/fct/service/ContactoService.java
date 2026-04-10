@@ -93,6 +93,13 @@ public class ContactoService {
         return ContactoDto.Response.from(contactoRepository.save(contacto));
     }
 
+    public ContactoDto.Response patchResultado(Long id, Contacto.ResultadoContacto resultado) {
+        Contacto contacto = contactoRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Contacto no encontrado: " + id));
+        contacto.setResultado(resultado);
+        return ContactoDto.Response.from(contactoRepository.save(contacto));
+    }
+
     public void delete(Long id) {
         if (!contactoRepository.existsById(id)) {
             throw new EntityNotFoundException("Contacto no encontrado: " + id);
