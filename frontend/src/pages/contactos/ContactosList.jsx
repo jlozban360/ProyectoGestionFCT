@@ -1,10 +1,14 @@
 import { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import {
   Table, Input, Select, Tag, Space, Typography, Card, Row, Col, Button, Modal, Form, DatePicker, message
 } from 'antd'
-import { SearchOutlined, PlusOutlined, PhoneOutlined, MailOutlined, EnvironmentOutlined } from '@ant-design/icons'
+import { SearchOutlined, PlusOutlined, PhoneOutlined, MailOutlined, EnvironmentOutlined, CloseOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { contactoService, empresaService } from '../../services/api'
+
+const MESES = ['', 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+               'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
 
 const { Title, Text } = Typography
 const { Option } = Select
@@ -14,25 +18,45 @@ const resultadoColors = { INTERESADO: 'green', PENDIENTE: 'orange', NO_INTERESAD
 const tipoIcons = { LLAMADA: <PhoneOutlined />, EMAIL: <MailOutlined />, VISITA: <EnvironmentOutlined /> }
 
 export default function ContactosList() {
+  const [searchParams, setSearchParams] = useSearchParams()
+
+  // Inicializar filtros desde URL (navegación desde dashboard)
   const [contactos, setContactos] = useState([])
   const [empresas, setEmpresas] = useState([])
   const [loading, setLoading] = useState(false)
   const [search, setSearch] = useState('')
   const [tipoFilter, setTipoFilter] = useState(null)
   const [resultadoFilter, setResultadoFilter] = useState(null)
+  const [mesFilter, setMesFilter] = useState(() => {
+    const v = searchParams.get('mes')
+    return v ? Number(v) : null
+  })
+  const [yearFilter, setYearFilter] = useState(() => {
+    const v = searchParams.get('year')
+    return v ? Number(v) : null
+  })
   const [modalVisible, setModalVisible] = useState(false)
   const [form] = Form.useForm()
 
   const fetchContactos = async () => {
     setLoading(true)
     try {
-      const { data } = await contactoService.getAll({ search, tipo: tipoFilter, resultado: resultadoFilter })
+      const params = { search, tipo: tipoFilter, resultado: resultadoFilter }
+      if (mesFilter)  params.mes  = mesFilter
+      if (yearFilter) params.year = yearFilter
+      const { data } = await contactoService.getAll(params)
       setContactos(data.content || data)
     } catch {
       setContactos([])
     } finally {
       setLoading(false)
     }
+  }
+
+  const clearFechaFilter = () => {
+    setMesFilter(null)
+    setYearFilter(null)
+    setSearchParams({})
   }
 
   const fetchEmpresas = async () => {
@@ -44,7 +68,7 @@ export default function ContactosList() {
     }
   }
 
-  useEffect(() => { fetchContactos() }, [search, tipoFilter, resultadoFilter])
+  useEffect(() => { fetchContactos() }, [search, tipoFilter, resultadoFilter, mesFilter, yearFilter])
   useEffect(() => { fetchEmpresas() }, [])
 
   const handleCreate = async (values) => {
@@ -102,7 +126,19 @@ export default function ContactosList() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
         <div>
           <Title level={3} style={{ margin: 0 }}>Contactos</Title>
-          <Text type="secondary">Historial global de todos los contactos con empresas</Text>
+          <Space size={8} style={{ marginTop: 4 }}>
+            <Text type="secondary">Historial global de todos los contactos con empresas</Text>
+            {(mesFilter || yearFilter) && (
+              <Tag
+                color="blue"
+                closable
+                onClose={clearFechaFilter}
+                icon={null}
+              >
+                {mesFilter ? `${MESES[mesFilter]} ` : ''}{yearFilter}
+              </Tag>
+            )}
+          </Space>
         </div>
         <Button type="primary" icon={<PlusOutlined />} size="large" onClick={() => setModalVisible(true)}>
           Nuevo contacto

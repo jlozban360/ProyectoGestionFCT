@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDate;
@@ -40,9 +41,11 @@ public class DashboardController {
     }
 
     @GetMapping("/contactos-mes")
-    public ResponseEntity<List<Map<String, Object>>> getContactosPorMes() {
+    public ResponseEntity<List<Map<String, Object>>> getContactosPorMes(
+            @RequestParam(required = false) Integer year) {
         String[] meses = {"Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"};
-        List<Object[]> raw = contactoRepository.findContactosPorMes(LocalDate.now().getYear());
+        int targetYear = (year != null) ? year : LocalDate.now().getYear();
+        List<Object[]> raw = contactoRepository.findContactosPorMes(targetYear);
         Map<Integer, Long> byMonth = new HashMap<>();
         for (Object[] row : raw) {
             byMonth.put(((Number) row[0]).intValue(), ((Number) row[1]).longValue());

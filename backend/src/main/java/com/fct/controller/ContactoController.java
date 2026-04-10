@@ -25,11 +25,13 @@ public class ContactoController {
             @RequestParam(required = false) String search,
             @RequestParam(required = false) String tipo,
             @RequestParam(required = false) String resultado,
+            @RequestParam(required = false) Integer mes,
+            @RequestParam(required = false) Integer year,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size
     ) {
         PageRequest pageable = PageRequest.of(page, size, Sort.by("fecha").descending());
-        return ResponseEntity.ok(contactoService.findAll(search, tipo, resultado, pageable));
+        return ResponseEntity.ok(contactoService.findAll(search, tipo, resultado, mes, year, pageable));
     }
 
     @GetMapping("/{id}")

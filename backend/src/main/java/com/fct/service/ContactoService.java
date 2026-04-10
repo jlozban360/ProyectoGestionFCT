@@ -24,7 +24,8 @@ public class ContactoService {
     private final EmpresaRepository empresaRepository;
 
     @Transactional(readOnly = true)
-    public Page<ContactoDto.Response> findAll(String search, String tipo, String resultado, Pageable pageable) {
+    public Page<ContactoDto.Response> findAll(String search, String tipo, String resultado,
+                                               Integer mes, Integer year, Pageable pageable) {
         Contacto.TipoContacto tipoEnum = null;
         if (tipo != null && !tipo.isBlank()) {
             try { tipoEnum = Contacto.TipoContacto.valueOf(tipo.toUpperCase()); }
@@ -36,7 +37,18 @@ public class ContactoService {
             catch (IllegalArgumentException ignored) {}
         }
         String searchParam = (search != null && !search.isBlank()) ? search : null;
-        return contactoRepository.findWithFilters(searchParam, tipoEnum, resultadoEnum, pageable)
+
+        java.time.LocalDate startDate = null;
+        java.time.LocalDate endDate = null;
+        if (year != null && mes != null) {
+            startDate = java.time.LocalDate.of(year, mes, 1);
+            endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
+        } else if (year != null) {
+            startDate = java.time.LocalDate.of(year, 1, 1);
+            endDate = java.time.LocalDate.of(year, 12, 31);
+        }
+
+        return contactoRepository.findWithFilters(searchParam, tipoEnum, resultadoEnum, startDate, endDate, pageable)
                 .map(ContactoDto.Response::from);
     }
 

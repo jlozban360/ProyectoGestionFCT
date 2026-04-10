@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
   Table, Button, Input, Select, Tag, Space, Typography, Card,
   Popconfirm, message, Tooltip, Row, Col, Avatar
@@ -27,27 +27,39 @@ const demoAlumnos = [
 
 export default function AlumnosList() {
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
+
   const [alumnos, setAlumnos] = useState([])
   const [loading, setLoading] = useState(false)
   const [search, setSearch] = useState('')
-  const [cicloFilter, setCicloFilter] = useState(null)
+  const [cicloFilter, setCicloFilter] = useState(() => searchParams.get('ciclo') || null)
+  const soloNoDisponible = searchParams.get('noDisponible') === '1'
 
   const fetchAlumnos = async () => {
     setLoading(true)
     try {
       const { data } = await alumnoService.getAll({ search, ciclo: cicloFilter })
-      setAlumnos(data.content || data)
+      let lista = data.content || data
+      if (soloNoDisponible) lista = lista.filter(a => a.estado !== 'DISPONIBLE')
+      setAlumnos(lista)
     } catch {
-      setAlumnos(demoAlumnos.filter(a =>
+      let lista = demoAlumnos.filter(a =>
         (!search || `${a.nombre} ${a.apellidos}`.toLowerCase().includes(search.toLowerCase())) &&
         (!cicloFilter || a.ciclo === cicloFilter)
-      ))
+      )
+      if (soloNoDisponible) lista = lista.filter(a => a.estado !== 'DISPONIBLE')
+      setAlumnos(lista)
     } finally {
       setLoading(false)
     }
   }
 
-  useEffect(() => { fetchAlumnos() }, [search, cicloFilter])
+  const clearFiltrosCiclo = () => {
+    setCicloFilter(null)
+    setSearchParams({})
+  }
+
+  useEffect(() => { fetchAlumnos() }, [search, cicloFilter, soloNoDisponible])
 
   const handleDelete = async (id) => {
     try {

@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
 import java.util.List;
+import org.springframework.lang.Nullable;
 
 public interface ContactoRepository extends JpaRepository<Contacto, Long> {
 
@@ -21,11 +22,15 @@ public interface ContactoRepository extends JpaRepository<Contacto, Long> {
     @Query("SELECT c FROM Contacto c WHERE " +
            "(:search IS NULL OR c.empresa.nombre ILIKE %:search% OR c.motivo ILIKE %:search%) " +
            "AND (:tipo IS NULL OR c.tipo = :tipo) " +
-           "AND (:resultado IS NULL OR c.resultado = :resultado)")
+           "AND (:resultado IS NULL OR c.resultado = :resultado) " +
+           "AND (:startDate IS NULL OR c.fecha >= :startDate) " +
+           "AND (:endDate IS NULL OR c.fecha <= :endDate)")
     Page<Contacto> findWithFilters(
-            @Param("search") String search,
-            @Param("tipo") Contacto.TipoContacto tipo,
-            @Param("resultado") Contacto.ResultadoContacto resultado,
+            @Param("search") @Nullable String search,
+            @Param("tipo") @Nullable Contacto.TipoContacto tipo,
+            @Param("resultado") @Nullable Contacto.ResultadoContacto resultado,
+            @Param("startDate") @Nullable LocalDate startDate,
+            @Param("endDate") @Nullable LocalDate endDate,
             Pageable pageable);
 
     @Query("SELECT c.profesor.nombre, COUNT(c) FROM Contacto c " +
