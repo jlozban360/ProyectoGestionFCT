@@ -41,6 +41,9 @@ public class EmpresaService {
     public EmpresaDto.Response update(Long id, EmpresaDto.Request req) {
         Empresa empresa = empresaRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Empresa no encontrada: " + id));
+        empresaRepository.findByCif(req.getCif())
+                .filter(e -> !e.getId().equals(id))
+                .ifPresent(e -> { throw new IllegalArgumentException("Ya existe otra empresa con el CIF: " + req.getCif()); });
         mapToEntity(empresa, req);
         return EmpresaDto.Response.from(empresaRepository.save(empresa));
     }

@@ -21,6 +21,8 @@ function Root() {
           colorError: '#dc2626',
           borderRadius: 8,
           fontFamily: "'DM Sans', sans-serif",
+          colorBgContainer: tema === 'dark' ? '#252526' : '#ffffff',
+          colorBgElevated: tema === 'dark' ? '#2d2d30' : '#ffffff',
         },
         components: {
           Menu: {

@@ -77,7 +77,7 @@ export default function ContactosList() {
       title: 'Tipo', dataIndex: 'tipo', key: 'tipo', width: 110,
       render: t => (
         <Space size={4}>
-          <span style={{ color: '#64748b' }}>{tipoIcons[t]}</span>
+          <Text type="secondary">{tipoIcons[t]}</Text>
           <span>{t}</span>
         </Space>
       )
@@ -102,19 +102,19 @@ export default function ContactosList() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
         <div>
           <Title level={3} style={{ margin: 0 }}>Contactos</Title>
-          <Text style={{ color: '#64748b' }}>Historial global de todos los contactos con empresas</Text>
+          <Text type="secondary">Historial global de todos los contactos con empresas</Text>
         </div>
         <Button type="primary" icon={<PlusOutlined />} size="large" onClick={() => setModalVisible(true)}>
           Nuevo contacto
         </Button>
       </div>
 
-      <Card style={{ borderRadius: 12, border: '1px solid #e2e8f0', marginBottom: 16 }}>
+      <Card style={{ borderRadius: 12, marginBottom: 16 }}>
         <Row gutter={12}>
           <Col flex={1}>
             <Input
               placeholder="Buscar por empresa, motivo..."
-              prefix={<SearchOutlined style={{ color: '#94a3b8' }} />}
+              prefix={<SearchOutlined />}
               value={search} onChange={e => setSearch(e.target.value)} allowClear
             />
           </Col>
@@ -136,7 +136,7 @@ export default function ContactosList() {
         </Row>
       </Card>
 
-      <Card style={{ borderRadius: 12, border: '1px solid #e2e8f0' }}>
+      <Card style={{ borderRadius: 12 }}>
         <Table
           dataSource={contactos}
           columns={columns}

@@ -28,32 +28,19 @@ export default function AlumnoForm() {
     setLoading(true)
     try {
       const empresaId = values.empresaId ? Number(values.empresaId) : null
-
-      //console.log('empresaId calculado:', empresaId, typeof empresaId)
-      //console.log('estado:', values.estado)
-
       const { empresaId: _, ...alumnoData } = values
 
-        if (isEdit) {
-          //console.log('Llamando update con:', alumnoData)
-          await alumnoService.update(id, alumnoData)
-          //console.log('Update OK, llamando asignar con:', { empresaId, estado: values.estado })
-          await alumnoService.asignarEmpresa(id, {
-            empresaId: empresaId,
-            estado: values.estado
-          })
-          message.success('Alumno actualizado')
-        } else {
+      if (isEdit) {
+        await alumnoService.update(id, alumnoData)
+        await alumnoService.asignarEmpresa(id, { empresaId, estado: values.estado })
+        message.success('Alumno actualizado')
+      } else {
         const { data } = await alumnoService.create(alumnoData)
-        await alumnoService.asignarEmpresa(data.id, {
-          empresaId: empresaId,
-          estado: values.estado
-        })
+        await alumnoService.asignarEmpresa(data.id, { empresaId, estado: values.estado })
         message.success('Alumno creado')
       }
       navigate('/alumnos')
     } catch (err) {
-      //console.error('Error detallado:', err.response?.data)
       message.error(err.response?.data?.message || 'Error al guardar')
     } finally {
       setLoading(false)
@@ -66,14 +53,14 @@ export default function AlumnoForm() {
         <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/alumnos')}>Volver</Button>
         <div>
           <Title level={3} style={{ margin: 0 }}>{isEdit ? 'Editar alumno' : 'Nuevo alumno'}</Title>
-          <Text style={{ color: '#64748b' }}>Datos del alumno para FCT</Text>
+          <Text type="secondary">Datos del alumno para FCT</Text>
         </div>
       </div>
 
       <Form form={form} layout="vertical" onFinish={onFinish} initialValues={{ estado: 'DISPONIBLE' }}>
         <Row gutter={[16, 0]}>
           <Col xs={24} lg={16}>
-            <Card title="Datos personales" style={{ borderRadius: 12, border: '1px solid #e2e8f0', marginBottom: 16 }}>
+            <Card title="Datos personales" style={{ borderRadius: 12, marginBottom: 16 }}>
               <Row gutter={12}>
                 <Col span={12}>
                   <Form.Item name="nombre" label="Nombre" rules={[{ required: true }]}>
@@ -105,7 +92,7 @@ export default function AlumnoForm() {
           </Col>
 
           <Col xs={24} lg={8}>
-            <Card title="Datos académicos" style={{ borderRadius: 12, border: '1px solid #e2e8f0', marginBottom: 16 }}>
+            <Card title="Datos académicos" style={{ borderRadius: 12, marginBottom: 16 }}>
               <Form.Item name="ciclo" label="Ciclo formativo" rules={[{ required: true }]}>
                 <Select placeholder="Selecciona ciclo">
                   <Option value="DAM">DAM</Option>
@@ -130,17 +117,12 @@ export default function AlumnoForm() {
                 </Select>
               </Form.Item>
               <Form.Item name="empresaId" label="Empresa asignada">
-                <Select
-                  allowClear
-                  showSearch
-                  optionFilterProp="children"
-                  placeholder="Sin asignar"
-                >
+                <Select allowClear showSearch optionFilterProp="children" placeholder="Sin asignar">
                   {empresas.map(e => <Option key={e.id} value={e.id}>{e.nombre}</Option>)}
                 </Select>
               </Form.Item>
             </Card>
-            <Card style={{ borderRadius: 12, border: '1px solid #e2e8f0' }}>
+            <Card style={{ borderRadius: 12 }}>
               <Space direction="vertical" style={{ width: '100%' }}>
                 <Button type="primary" htmlType="submit" block size="large" loading={loading} icon={<SaveOutlined />}>
                   {isEdit ? 'Guardar cambios' : 'Crear alumno'}

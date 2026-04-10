@@ -52,7 +52,7 @@ export default function EmpresaForm() {
           <Title level={3} style={{ margin: 0 }}>
             {isEdit ? 'Editar empresa' : 'Nueva empresa'}
           </Title>
-          <Text style={{ color: '#64748b' }}>
+          <Text type="secondary">
             {isEdit ? 'Modifica los datos de la empresa' : 'Registra una nueva empresa colaboradora'}
           </Text>
         </div>
@@ -60,9 +60,8 @@ export default function EmpresaForm() {
 
       <Form form={form} layout="vertical" onFinish={onFinish} initialValues={{ activa: true }}>
         <Row gutter={[16, 0]}>
-          {/* Datos generales */}
           <Col xs={24} lg={16}>
-            <Card title="Datos generales" style={{ borderRadius: 12, border: '1px solid #e2e8f0', marginBottom: 16 }}>
+            <Card title="Datos generales" style={{ borderRadius: 12, marginBottom: 16 }}>
               <Row gutter={12}>
                 <Col span={8}>
                   <Form.Item name="cif" label="CIF" rules={[{ required: true }]}>
@@ -105,7 +104,7 @@ export default function EmpresaForm() {
               </Form.Item>
             </Card>
 
-            <Card title="Contacto principal" style={{ borderRadius: 12, border: '1px solid #e2e8f0' }}>
+            <Card title="Contacto principal" style={{ borderRadius: 12 }}>
               <Row gutter={12}>
                 <Col span={12}>
                   <Form.Item name="contactoPrincipal" label="Nombre del contacto" rules={[{ required: true }]}>
@@ -133,9 +132,8 @@ export default function EmpresaForm() {
             </Card>
           </Col>
 
-          {/* Panel derecho */}
           <Col xs={24} lg={8}>
-            <Card title="Colaboración FCT" style={{ borderRadius: 12, border: '1px solid #e2e8f0', marginBottom: 16 }}>
+            <Card title="Colaboración FCT" style={{ borderRadius: 12, marginBottom: 16 }}>
               <Form.Item name="modalidad" label="Modalidad" rules={[{ required: true }]}>
                 <Select placeholder="Tipo de colaboración">
                   <Option value="FCT">FCT (Formación en centro de trabajo)</Option>
@@ -144,7 +142,6 @@ export default function EmpresaForm() {
                   <Option value="MIXTA">Mixta</Option>
                 </Select>
               </Form.Item>
-
               <Form.Item name="perfilesSolicitados" label="Perfiles que solicitan">
                 <Select mode="multiple" placeholder="Selecciona ciclos">
                   <Option value="DAM">DAM (Desarrollo de Apps Multiplataforma)</Option>
@@ -154,23 +151,17 @@ export default function EmpresaForm() {
                   <Option value="CFGM-SMR">CFGM SMR</Option>
                 </Select>
               </Form.Item>
-
               <Form.Item name="activa" label="Estado" valuePropName="checked">
                 <Switch checkedChildren="Activa" unCheckedChildren="Inactiva" />
               </Form.Item>
             </Card>
 
-            <Card style={{ borderRadius: 12, border: '1px solid #e2e8f0' }}>
+            <Card style={{ borderRadius: 12 }}>
               <Space direction="vertical" style={{ width: '100%' }}>
-                <Button
-                  type="primary" htmlType="submit" block size="large"
-                  loading={loading} icon={<SaveOutlined />}
-                >
+                <Button type="primary" htmlType="submit" block size="large" loading={loading} icon={<SaveOutlined />}>
                   {isEdit ? 'Guardar cambios' : 'Crear empresa'}
                 </Button>
-                <Button block onClick={() => navigate('/empresas')}>
-                  Cancelar
-                </Button>
+                <Button block onClick={() => navigate('/empresas')}>Cancelar</Button>
               </Space>
             </Card>
           </Col>

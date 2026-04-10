@@ -8,7 +8,6 @@ import com.fct.repository.EmpresaRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,23 +24,14 @@ public class AlumnoService {
 
     @Transactional(readOnly = true)
     public Page<AlumnoDto.Response> findAll(String search, String ciclo, Pageable pageable) {
-        Page<Alumno> page;
+        Alumno.CicloFormativo cicloEnum = null;
         if (ciclo != null && !ciclo.isBlank()) {
-            try {
-                Alumno.CicloFormativo cicloEnum = Alumno.CicloFormativo.valueOf(ciclo.toUpperCase());
-                // filter by search + ciclo in memory from a search-only page
-                page = alumnoRepository.findBySearch(search, pageable);
-                // apply ciclo filter post-fetch (simple approach for a school project)
-                List<AlumnoDto.Response> filtered = page.getContent().stream()
-                        .filter(a -> a.getCiclo() == cicloEnum)
-                        .map(AlumnoDto.Response::from)
-                        .toList();
-                return new PageImpl<>(filtered, pageable, filtered.size());
-            } catch (IllegalArgumentException e) {
-                // unknown ciclo, ignore filter
-            }
+            try { cicloEnum = Alumno.CicloFormativo.valueOf(ciclo.toUpperCase()); }
+            catch (IllegalArgumentException ignored) {}
         }
-        return alumnoRepository.findBySearch(search, pageable).map(AlumnoDto.Response::from);
+        String searchParam = (search != null && !search.isBlank()) ? search : null;
+        return alumnoRepository.findBySearchAndCiclo(searchParam, cicloEnum, pageable)
+                .map(AlumnoDto.Response::from);
     }
 
     @Transactional(readOnly = true)

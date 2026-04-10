@@ -46,14 +46,14 @@ export default function ProfesorForm() {
         <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/profesores')}>Volver</Button>
         <div>
           <Title level={3} style={{ margin: 0 }}>{isEdit ? 'Editar profesor' : 'Nuevo profesor'}</Title>
-          <Text style={{ color: '#64748b' }}>Datos del profesor del departamento</Text>
+          <Text type="secondary">Datos del profesor del departamento</Text>
         </div>
       </div>
 
       <Form form={form} layout="vertical" onFinish={onFinish} initialValues={{ rol: 'COLABORADOR', activo: true }}>
         <Row gutter={[16, 0]}>
           <Col xs={24} lg={16}>
-            <Card title="Datos personales" style={{ borderRadius: 12, border: '1px solid #e2e8f0', marginBottom: 16 }}>
+            <Card title="Datos personales" style={{ borderRadius: 12, marginBottom: 16 }}>
               <Row gutter={12}>
                 <Col span={12}>
                   <Form.Item name="nombre" label="Nombre completo" rules={[{ required: true }]}>
@@ -77,7 +77,7 @@ export default function ProfesorForm() {
             </Card>
           </Col>
           <Col xs={24} lg={8}>
-            <Card title="Permisos y estado" style={{ borderRadius: 12, border: '1px solid #e2e8f0', marginBottom: 16 }}>
+            <Card title="Permisos y estado" style={{ borderRadius: 12, marginBottom: 16 }}>
               <Form.Item name="rol" label="Rol">
                 <Select>
                   <Option value="COLABORADOR">Colaborador</Option>
@@ -88,7 +88,7 @@ export default function ProfesorForm() {
                 <Switch checkedChildren="Activo" unCheckedChildren="Inactivo" />
               </Form.Item>
             </Card>
-            <Card style={{ borderRadius: 12, border: '1px solid #e2e8f0' }}>
+            <Card style={{ borderRadius: 12 }}>
               <Space direction="vertical" style={{ width: '100%' }}>
                 <Button type="primary" htmlType="submit" block size="large" loading={loading} icon={<SaveOutlined />}>
                   {isEdit ? 'Guardar cambios' : 'Crear profesor'}

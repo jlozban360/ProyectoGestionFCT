@@ -5,8 +5,7 @@ import {
   Popconfirm, message, Tooltip, Row, Col
 } from 'antd'
 import {
-  PlusOutlined, SearchOutlined, EditOutlined, DeleteOutlined,
-  EyeOutlined, BankOutlined
+  PlusOutlined, SearchOutlined, EditOutlined, DeleteOutlined, EyeOutlined
 } from '@ant-design/icons'
 import { empresaService } from '../../services/api'
 
@@ -28,19 +27,19 @@ export default function EmpresasList() {
   const [sectorFilter, setSectorFilter] = useState(null)
   const [pagination, setPagination] = useState({ current: 1, pageSize: 10, total: 0 })
 
-  const fetchEmpresas = async (page = 1) => {
+  const fetchEmpresas = async (page = 1, pageSize) => {
+    const size = pageSize || pagination.pageSize
     setLoading(true)
     try {
       const { data } = await empresaService.getAll({
         page: page - 1,
-        size: pagination.pageSize,
+        size,
         search,
         sector: sectorFilter,
       })
       setEmpresas(data.content || data)
-      setPagination(p => ({ ...p, total: data.totalElements || data.length, current: page }))
+      setPagination(p => ({ ...p, total: data.totalElements || data.length, current: page, pageSize: size }))
     } catch {
-      // datos demo
       setEmpresas([
         { id: 1, cif: 'B12345678', nombre: 'Accenture Spain', sector: 'Consultoría TI', modalidad: 'FCT', contactoPrincipal: 'María García', telefono: '912345678', activa: true },
         { id: 2, cif: 'A87654321', nombre: 'Indra Sistemas', sector: 'Software', modalidad: 'DUAL', contactoPrincipal: 'Carlos López', telefono: '913456789', activa: true },
@@ -70,7 +69,7 @@ export default function EmpresasList() {
       render: (_, r) => (
         <div>
           <div style={{ fontWeight: 600 }}>{r.nombre}</div>
-          <div style={{ fontSize: 12, color: '#64748b' }}>{r.cif}</div>
+          <Text type="secondary" style={{ fontSize: 12 }}>{r.cif}</Text>
         </div>
       )
     },
@@ -95,11 +94,7 @@ export default function EmpresasList() {
           <Tooltip title="Editar">
             <Button size="small" icon={<EditOutlined />} onClick={() => navigate(`/empresas/${r.id}/editar`)} />
           </Tooltip>
-          <Popconfirm
-            title="¿Eliminar esta empresa?"
-            onConfirm={() => handleDelete(r.id)}
-            okText="Sí" cancelText="No"
-          >
+          <Popconfirm title="¿Eliminar esta empresa?" onConfirm={() => handleDelete(r.id)} okText="Sí" cancelText="No">
             <Tooltip title="Eliminar">
               <Button size="small" danger icon={<DeleteOutlined />} />
             </Tooltip>
@@ -114,36 +109,26 @@ export default function EmpresasList() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
         <div>
           <Title level={3} style={{ margin: 0 }}>Empresas</Title>
-          <Text style={{ color: '#64748b' }}>Gestión de empresas colaboradoras</Text>
+          <Text type="secondary">Gestión de empresas colaboradoras</Text>
         </div>
-        <Button
-          type="primary"
-          icon={<PlusOutlined />}
-          onClick={() => navigate('/empresas/nueva')}
-          size="large"
-        >
+        <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/empresas/nueva')} size="large">
           Nueva empresa
         </Button>
       </div>
 
-      <Card style={{ borderRadius: 12, border: '1px solid #e2e8f0', marginBottom: 16 }}>
+      <Card style={{ borderRadius: 12, marginBottom: 16 }}>
         <Row gutter={12}>
           <Col flex={1}>
             <Input
               placeholder="Buscar por nombre, CIF..."
-              prefix={<SearchOutlined style={{ color: '#94a3b8' }} />}
+              prefix={<SearchOutlined />}
               value={search}
               onChange={e => setSearch(e.target.value)}
               allowClear
             />
           </Col>
           <Col>
-            <Select
-              placeholder="Sector"
-              style={{ width: 180 }}
-              allowClear
-              onChange={setSectorFilter}
-            >
+            <Select placeholder="Sector" style={{ width: 180 }} allowClear onChange={setSectorFilter}>
               <Option value="Consultoría TI">Consultoría TI</Option>
               <Option value="Software">Software</Option>
               <Option value="Telecomunicaciones">Telecomunicaciones</Option>
@@ -154,7 +139,7 @@ export default function EmpresasList() {
         </Row>
       </Card>
 
-      <Card style={{ borderRadius: 12, border: '1px solid #e2e8f0' }}>
+      <Card style={{ borderRadius: 12 }}>
         <Table
           dataSource={empresas}
           columns={columns}

@@ -8,6 +8,7 @@ import relativeTime from 'dayjs/plugin/relativeTime'
 import 'dayjs/locale/es'
 import { contactoService, alumnoService } from '../services/api'
 import { useNavigate } from 'react-router-dom'
+import { useThemeStore } from '../store/themeStore'
 
 dayjs.extend(relativeTime)
 dayjs.locale('es')
@@ -92,6 +93,7 @@ export default function NotificacionesDrawer() {
   const [loading, setLoading] = useState(false)
   const [notificaciones, setNotificaciones] = useState([])
   const navigate = useNavigate()
+  const isDark = useThemeStore(s => s.tema === 'dark')
 
   const cargarNotificaciones = async () => {
     setLoading(true)
@@ -176,15 +178,16 @@ export default function NotificacionesDrawer() {
                   borderBottom: '1px solid #f1f5f9',
                   transition: 'background 0.15s',
                 }}
-                onMouseEnter={e => e.currentTarget.style.background = '#f8fafc'}
+                onMouseEnter={e => e.currentTarget.style.background = isDark ? '#1e1e1e' : '#f8fafc'}
                 onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                 onClick={() => handleClick(notif)}
               >
                 <div style={{ display: 'flex', gap: 12, width: '100%' }}>
                   <div style={{
                     width: 36, height: 36, borderRadius: 8, flexShrink: 0,
-                    background: notif.color === 'orange' ? '#fffbeb'
-                      : notif.color === 'blue' ? '#eff6ff' : '#fef2f2',
+                    background: isDark
+                      ? (notif.color === 'orange' ? '#2a1f00' : notif.color === 'blue' ? '#001a3a' : '#2a0000')
+                      : (notif.color === 'orange' ? '#fffbeb' : notif.color === 'blue' ? '#eff6ff' : '#fef2f2'),
                     color: notif.color === 'orange' ? '#d97706'
                       : notif.color === 'blue' ? '#2563eb' : '#dc2626',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',

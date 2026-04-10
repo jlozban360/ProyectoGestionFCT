@@ -53,7 +53,7 @@ export default function ProfesoresList() {
           </Avatar>
           <div>
             <div style={{ fontWeight: 600 }}>{r.nombre}</div>
-            <div style={{ fontSize: 12, color: '#64748b' }}>{r.email}</div>
+            <Text type="secondary" style={{ fontSize: 12 }}>{r.email}</Text>
           </div>
         </Space>
       )
@@ -65,7 +65,7 @@ export default function ProfesoresList() {
     },
     {
       title: 'Contactos realizados', dataIndex: 'totalContactos', key: 'totalContactos',
-      render: n => <strong>{n}</strong>
+      render: n => <strong>{n ?? 0}</strong>
     },
     {
       title: 'Estado', dataIndex: 'activo', key: 'activo',
@@ -91,13 +91,13 @@ export default function ProfesoresList() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
         <div>
           <Title level={3} style={{ margin: 0 }}>Profesores</Title>
-          <Text style={{ color: '#64748b' }}>Gestión de profesores del departamento</Text>
+          <Text type="secondary">Gestión de profesores del departamento</Text>
         </div>
         <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/profesores/nuevo')} size="large">
           Nuevo profesor
         </Button>
       </div>
-      <Card style={{ borderRadius: 12, border: '1px solid #e2e8f0' }}>
+      <Card style={{ borderRadius: 12 }}>
         <Table dataSource={profesores} columns={columns} rowKey="id" loading={loading} />
       </Card>
     </div>

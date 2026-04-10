@@ -9,13 +9,11 @@ import com.fct.repository.EmpresaRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
@@ -27,41 +25,19 @@ public class ContactoService {
 
     @Transactional(readOnly = true)
     public Page<ContactoDto.Response> findAll(String search, String tipo, String resultado, Pageable pageable) {
-        List<Contacto> all = contactoRepository.findAll();
-
-        Stream<Contacto> stream = all.stream();
-
-        if (search != null && !search.isBlank()) {
-            String lc = search.toLowerCase();
-            stream = stream.filter(c ->
-                c.getEmpresa().getNombre().toLowerCase().contains(lc) ||
-                c.getMotivo().toLowerCase().contains(lc));
-        }
+        Contacto.TipoContacto tipoEnum = null;
         if (tipo != null && !tipo.isBlank()) {
-            try {
-                Contacto.TipoContacto t = Contacto.TipoContacto.valueOf(tipo.toUpperCase());
-                stream = stream.filter(c -> c.getTipo() == t);
-            } catch (IllegalArgumentException ignored) {}
+            try { tipoEnum = Contacto.TipoContacto.valueOf(tipo.toUpperCase()); }
+            catch (IllegalArgumentException ignored) {}
         }
+        Contacto.ResultadoContacto resultadoEnum = null;
         if (resultado != null && !resultado.isBlank()) {
-            try {
-                Contacto.ResultadoContacto r = Contacto.ResultadoContacto.valueOf(resultado.toUpperCase());
-                stream = stream.filter(c -> c.getResultado() == r);
-            } catch (IllegalArgumentException ignored) {}
+            try { resultadoEnum = Contacto.ResultadoContacto.valueOf(resultado.toUpperCase()); }
+            catch (IllegalArgumentException ignored) {}
         }
-
-        List<ContactoDto.Response> filtered = stream
-                .sorted((a, b) -> b.getFecha().compareTo(a.getFecha()))
-                .map(ContactoDto.Response::from)
-                .toList();
-
-        int start = (int) pageable.getOffset();
-        int end = Math.min(start + pageable.getPageSize(), filtered.size());
-        List<ContactoDto.Response> pageContent = start < filtered.size()
-                ? filtered.subList(start, end)
-                : List.of();
-
-        return new PageImpl<>(pageContent, pageable, filtered.size());
+        String searchParam = (search != null && !search.isBlank()) ? search : null;
+        return contactoRepository.findWithFilters(searchParam, tipoEnum, resultadoEnum, pageable)
+                .map(ContactoDto.Response::from);
     }
 
     @Transactional(readOnly = true)

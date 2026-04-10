@@ -69,7 +69,7 @@ export default function AlumnosList() {
           </Avatar>
           <div>
             <div style={{ fontWeight: 600 }}>{r.nombre} {r.apellidos}</div>
-            <div style={{ fontSize: 12, color: '#64748b' }}>{r.email}</div>
+            <div style={{ fontSize: 12 }}><Text type="secondary">{r.email}</Text></div>
           </div>
         </Space>
       )
@@ -104,19 +104,19 @@ export default function AlumnosList() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
         <div>
           <Title level={3} style={{ margin: 0 }}>Alumnos</Title>
-          <Text style={{ color: '#64748b' }}>Gestión de alumnos disponibles para FCT</Text>
+          <Text type="secondary">Gestión de alumnos disponibles para FCT</Text>
         </div>
         <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/alumnos/nuevo')} size="large">
           Nuevo alumno
         </Button>
       </div>
 
-      <Card style={{ borderRadius: 12, border: '1px solid #e2e8f0', marginBottom: 16 }}>
+      <Card style={{ borderRadius: 12, marginBottom: 16 }}>
         <Row gutter={12}>
           <Col flex={1}>
             <Input
               placeholder="Buscar alumno..."
-              prefix={<SearchOutlined style={{ color: '#94a3b8' }} />}
+              prefix={<SearchOutlined />}
               value={search} onChange={e => setSearch(e.target.value)} allowClear
             />
           </Col>
@@ -131,7 +131,7 @@ export default function AlumnosList() {
         </Row>
       </Card>
 
-      <Card style={{ borderRadius: 12, border: '1px solid #e2e8f0' }}>
+      <Card style={{ borderRadius: 12 }}>
         <Table dataSource={alumnos} columns={columns} rowKey="id" loading={loading} />
       </Card>
     </div>

@@ -34,8 +34,9 @@ public class ProfesorDto {
         private boolean activo;
         private String tema;
         private LocalDateTime createdAt;
+        private long totalContactos;
 
-        public static Response from(Profesor p) {
+        public static Response from(Profesor p, long totalContactos) {
             return Response.builder()
                     .id(p.getId())
                     .nombre(p.getNombre())
@@ -45,7 +46,12 @@ public class ProfesorDto {
                     .activo(p.isActivo())
                     .createdAt(p.getCreatedAt())
                     .tema(p.getTema())
+                    .totalContactos(totalContactos)
                     .build();
+        }
+
+        public static Response from(Profesor p) {
+            return from(p, 0L);
         }
     }
 

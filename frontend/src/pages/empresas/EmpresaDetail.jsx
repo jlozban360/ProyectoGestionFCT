@@ -10,6 +10,7 @@ import {
 } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { empresaService, contactoService, alumnoService } from '../../services/api'
+import { useThemeStore } from '../../store/themeStore'
 
 const { Title, Text } = Typography
 const { TextArea } = Input
@@ -34,6 +35,12 @@ export default function EmpresaDetail() {
   const [modalAlumno, setModalAlumno] = useState(false)
   const [formContacto] = Form.useForm()
   const [formAlumno] = Form.useForm()
+
+  const tema = useThemeStore(s => s.tema)
+  const isDark = tema === 'dark'
+  const itemBg = isDark ? '#1e1e1e' : '#f8fafc'
+  const itemBorder = isDark ? '#303030' : '#e2e8f0'
+  const obsBg = isDark ? '#1a1a1a' : '#f8fafc'
 
   const loadData = async () => {
     setLoading(true)
@@ -142,14 +149,14 @@ export default function EmpresaDetail() {
         <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/empresas')}>Volver</Button>
         <div style={{ flex: 1 }}>
           <Title level={3} style={{ margin: 0 }}>{empresa.nombre}</Title>
-          <Text style={{ color: '#64748b' }}>{empresa.cif} · {empresa.sector}</Text>
+          <Text type="secondary">{empresa.cif} · {empresa.sector}</Text>
         </div>
         <Button icon={<EditOutlined />} onClick={() => navigate(`/empresas/${id}/editar`)}>Editar</Button>
       </div>
 
       <Row gutter={[16, 16]}>
         <Col xs={24} lg={8}>
-          <Card style={{ borderRadius: 12, border: '1px solid #e2e8f0' }}>
+          <Card style={{ borderRadius: 12 }}>
             <div style={{ textAlign: 'center', marginBottom: 20 }}>
               <Avatar size={64} style={{ background: '#eff6ff', color: '#2563eb', fontSize: 24, fontWeight: 700 }}>
                 {empresa.nombre[0]}
@@ -170,15 +177,15 @@ export default function EmpresaDetail() {
               </Descriptions.Item>
             </Descriptions>
             {empresa.observaciones && (
-              <div style={{ marginTop: 16, padding: 12, background: '#f8fafc', borderRadius: 8 }}>
-                <Text style={{ fontSize: 12, color: '#64748b' }}>{empresa.observaciones}</Text>
+              <div style={{ marginTop: 16, padding: 12, background: obsBg, borderRadius: 8 }}>
+                <Text type="secondary" style={{ fontSize: 12 }}>{empresa.observaciones}</Text>
               </div>
             )}
           </Card>
         </Col>
 
         <Col xs={24} lg={16}>
-          <Card style={{ borderRadius: 12, border: '1px solid #e2e8f0' }}>
+          <Card style={{ borderRadius: 12 }}>
             <Tabs
               defaultActiveKey="contactos"
               items={[
@@ -200,30 +207,32 @@ export default function EmpresaDetail() {
                             dot: tipoIcons[c.tipo],
                             children: (
                               <div style={{
-                                background: '#f8fafc', borderRadius: 10,
-                                padding: '12px 16px', border: '1px solid #e2e8f0',
+                                background: itemBg,
+                                borderRadius: 10,
+                                padding: '12px 16px',
+                                border: `1px solid ${itemBorder}`,
                               }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
                                   <Space>
                                     <Tag>{c.tipo}</Tag>
                                     <Tag color={resultadoColors[c.resultado]}>{c.resultado?.replace('_', ' ')}</Tag>
                                   </Space>
-                                  <Text style={{ fontSize: 12, color: '#64748b' }}>
+                                  <Text type="secondary" style={{ fontSize: 12 }}>
                                     {dayjs(c.fecha).format('DD MMM YYYY')}
                                   </Text>
                                 </div>
                                 <div style={{ fontWeight: 500, marginBottom: 4 }}>{c.motivo}</div>
                                 {c.necesidades && (
-                                  <div style={{ fontSize: 13, color: '#64748b', marginBottom: 4 }}>
-                                    <strong>Necesidades:</strong> {c.necesidades}
+                                  <div style={{ fontSize: 13, marginBottom: 4 }}>
+                                    <Text type="secondary"><strong>Necesidades:</strong> {c.necesidades}</Text>
                                   </div>
                                 )}
                                 {c.proximaAccion && (
                                   <div style={{ fontSize: 13, color: '#2563eb' }}>→ {c.proximaAccion}</div>
                                 )}
-                                <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 6 }}>
+                                <Text type="secondary" style={{ fontSize: 11, display: 'block', marginTop: 6 }}>
                                   Por {c.profesor?.nombre}
-                                </div>
+                                </Text>
                               </div>
                             ),
                           }))} />
@@ -263,7 +272,6 @@ export default function EmpresaDetail() {
         </Col>
       </Row>
 
-      {/* Modal nuevo contacto */}
       <Modal
         title="Registrar contacto"
         open={modalContacto}
@@ -312,7 +320,6 @@ export default function EmpresaDetail() {
         </Form>
       </Modal>
 
-      {/* Modal asignar alumno */}
       <Modal
         title="Asignar alumno a esta empresa"
         open={modalAlumno}

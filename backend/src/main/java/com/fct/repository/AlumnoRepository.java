@@ -2,7 +2,6 @@ package com.fct.repository;
 
 import com.fct.entity.Alumno;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -20,6 +19,9 @@ public interface AlumnoRepository extends JpaRepository<Alumno, Long> {
     List<Object[]> countByCiclo();
 
     @Query("SELECT a FROM Alumno a WHERE " +
-            "(:search IS NULL OR a.nombre LIKE %:search% OR a.apellidos LIKE %:search%)")
-    Page<Alumno> findBySearch(@Param("search") String search, Pageable pageable);
+            "(:search IS NULL OR a.nombre ILIKE %:search% OR a.apellidos ILIKE %:search%) " +
+            "AND (:ciclo IS NULL OR a.ciclo = :ciclo)")
+    Page<Alumno> findBySearchAndCiclo(@Param("search") String search,
+                                      @Param("ciclo") Alumno.CicloFormativo ciclo,
+                                      Pageable pageable);
 }
