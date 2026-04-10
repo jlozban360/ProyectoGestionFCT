@@ -55,7 +55,16 @@ const yearTabs = [currentYear - 2, currentYear - 1, currentYear].map(y => ({
   key: String(y), label: String(y),
 }))
 
-const PIE_COLORS = ['#3b82f6', '#16a34a', '#d97706', '#7c3aed']
+const CHART_COLORS = {
+  light: {
+    column: '#3b82f6',
+    pie: ['#3b82f6', '#16a34a', '#d97706', '#7c3aed'],
+  },
+  dark: {
+    column: '#60a5fa',
+    pie: ['#60a5fa', '#4ade80', '#fbbf24', '#a78bfa'],
+  },
+}
 
 export default function Dashboard() {
   const navigate = useNavigate()
@@ -130,11 +139,13 @@ export default function Dashboard() {
   const maxContactos = Math.max(...contactosMes.map(c => c.contactos), 1)
   const tickInterval = calcTickInterval(maxContactos)
 
+  const themeColors = isDark ? CHART_COLORS.dark : CHART_COLORS.light
+
   const columnChartConfig = {
     data: contactosMes,
     xField: 'mes',
     yField: 'contactos',
-    color: '#3b82f6',
+    color: themeColors.column,
     radius: [4, 4, 0, 0],
     height: 240,
     theme: isDark ? 'dark' : 'light',
@@ -151,19 +162,19 @@ export default function Dashboard() {
     radius: 0.82,
     innerRadius: 0.5,
     height: 240,
-    color: PIE_COLORS,
+    color: themeColors.pie,
     theme: isDark ? 'dark' : 'light',
     legend: { position: 'bottom' },
     label: {
       text: (d) => d.type,
-      style: { fontSize: 11, fill: isDark ? '#aaa' : '#444', fontWeight: 600 },
+      style: { fontSize: 11, fill: isDark ? '#c0c0c0' : '#444', fontWeight: 600 },
     },
     tooltip: {
       items: [(d) => ({ name: d.type, value: `${d.value} alumno${d.value !== 1 ? 's' : ''}` })],
     },
     state: {
       active: {
-        style: { offset: 10, stroke: isDark ? '#555' : '#fff', strokeWidth: 2 },
+        style: { offset: 10, stroke: isDark ? '#6b7280' : '#ffffff', strokeWidth: 2 },
       },
     },
     interactions: [{ type: 'element-active' }],
