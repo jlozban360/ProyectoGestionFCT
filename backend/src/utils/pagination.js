@@ -1,4 +1,4 @@
-// Devuelve el formato Page<T> idéntico al de Spring Data
+// Devuelve el formato de paginación que espera el frontend
 function buildPage(content, totalElements, page, size) {
   const totalPages = Math.ceil(totalElements / size) || 0;
   return {

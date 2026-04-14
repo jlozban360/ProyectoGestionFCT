@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const { errorHandler } = require('./middleware/errorHandler');
+const initDb = require('./config/initDb');
 
 const app = express();
 const PORT = process.env.PORT || 8080;
@@ -13,7 +14,7 @@ app.use(cors({
 }));
 app.use(express.json());
 
-// Rutas bajo /api (igual que Spring con context-path: /api)
+// Rutas bajo /api
 app.use('/api/health',     require('./routes/health'));
 app.use('/api/auth',       require('./routes/auth'));
 app.use('/api/empresas',   require('./routes/empresas'));
@@ -24,6 +25,13 @@ app.use('/api/dashboard',  require('./routes/dashboard'));
 
 app.use(errorHandler);
 
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Backend Node.js escuchando en puerto ${PORT}`);
-});
+initDb()
+  .then(() => {
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`Backend Node.js escuchando en puerto ${PORT}`);
+    });
+  })
+  .catch(err => {
+    console.error('Error inicializando la base de datos:', err);
+    process.exit(1);
+  });

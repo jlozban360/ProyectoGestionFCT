@@ -1,7 +1,7 @@
-FROM node:26-alpine
+FROM node:24-alpine
 WORKDIR /app
 COPY package*.json ./
-RUN npm ci --only=production
+RUN npm install --omit=dev
 COPY src ./src
 RUN addgroup -S fct && adduser -S fct -G fct
 USER fct
