@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Form, Input, Button, message, Typography } from 'antd'
+import { Form, Input, Button, message, Typography, ConfigProvider, theme } from 'antd'
 import { UserOutlined, LockOutlined } from '@ant-design/icons'
 import { authService } from '../services/api'
 import { useAuthStore } from '../store/authStore'
@@ -13,6 +13,7 @@ export default function LoginPage() {
   const navigate = useNavigate()
   const setAuth = useAuthStore(s => s.setAuth)
   const setTema = useThemeStore(s => s.setTema)
+  const { defaultAlgorithm } = theme
 
   const onFinish = async ({ email, password }) => {
     setLoading(true)
@@ -33,6 +34,7 @@ export default function LoginPage() {
   }
 
   return (
+    <ConfigProvider theme={{ algorithm: defaultAlgorithm }}>
     <div style={{
       minHeight: '100vh',
       background: 'linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%)',
@@ -144,5 +146,6 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+    </ConfigProvider>
   )
 }
