@@ -50,7 +50,7 @@ Proyecto Final de Grado Superior — **Desarrollo de Aplicaciones Multiplataform
 
 | Tecnología | Versión | Uso |
 |---|---|---|
-| Node.js | 20 | Entorno de ejecución |
+| Node.js | 26 | Entorno de ejecución |
 | Express | 4.19 | Framework HTTP |
 | node-postgres (pg) | 8.11 | Driver PostgreSQL nativo |
 | jsonwebtoken | 9.0 | Tokens JWT |
