@@ -1,14 +1,9 @@
-FROM maven:3.9.6-eclipse-temurin-21 AS builder
+FROM node:26-alpine
 WORKDIR /app
-COPY pom.xml .
-RUN mvn dependency:go-offline -B
+COPY package*.json ./
+RUN npm ci --only=production
 COPY src ./src
-RUN mvn clean package -DskipTests -B
-
-FROM eclipse-temurin:21-jre-alpine
-WORKDIR /app
 RUN addgroup -S fct && adduser -S fct -G fct
-COPY --from=builder /app/target/*.jar app.jar
 USER fct
 EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "-Dspring.profiles.active=prod", "app.jar"]
+CMD ["node", "src/index.js"]

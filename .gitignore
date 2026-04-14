@@ -2,15 +2,8 @@
 frontend/node_modules/
 frontend/dist/
 
-# Backend Spring Boot
-backend/target/
-backend/*.jar
-
 # Backend Node.js
-backend-node/node_modules/
-
-# Entorno
-*.env.local
+backend/node_modules/
 
 # IDEs
 .idea/

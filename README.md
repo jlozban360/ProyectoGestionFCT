@@ -12,14 +12,13 @@ Proyecto Final de Grado Superior — **Desarrollo de Aplicaciones Multiplataform
 2. [Arquitectura](#arquitectura)
 3. [Requisitos](#requisitos)
 4. [Puesta en marcha](#puesta-en-marcha)
-5. [Cambio de backend](#cambio-de-backend)
-6. [Estructura del proyecto](#estructura-del-proyecto)
-7. [API REST](#api-rest)
-8. [Roles y permisos](#roles-y-permisos)
-9. [Desarrollo local](#desarrollo-local)
-10. [Variables de entorno](#variables-de-entorno)
-11. [Comandos útiles](#comandos-útiles)
-12. [Autoría y licencia](#autoría-y-licencia)
+5. [Estructura del proyecto](#estructura-del-proyecto)
+6. [API REST](#api-rest)
+7. [Roles y permisos](#roles-y-permisos)
+8. [Desarrollo local](#desarrollo-local)
+9. [Variables de entorno](#variables-de-entorno)
+10. [Comandos útiles](#comandos-útiles)
+11. [Autoría y licencia](#autoría-y-licencia)
 
 ---
 
@@ -36,24 +35,14 @@ Proyecto Final de Grado Superior — **Desarrollo de Aplicaciones Multiplataform
 | Axios | 1.6 | Cliente HTTP |
 | React Router | 6.22 | Enrutamiento SPA |
 
-### Backend — Spring Boot *(activo por defecto)*
-
-| Tecnología | Versión | Uso |
-|---|---|---|
-| Java | 21 | Lenguaje |
-| Spring Boot | 3.2.3 | Framework principal |
-| Spring Security | 6 | Autenticación y autorización |
-| JWT (jjwt) | 0.12.3 | Tokens de sesión stateless |
-| JPA / Hibernate | — | ORM y gestión de esquema |
-
-### Backend — Node.js *(alternativo)*
+### Backend
 
 | Tecnología | Versión | Uso |
 |---|---|---|
 | Node.js | 26 | Entorno de ejecución |
 | Express | 4.19 | Framework HTTP |
 | node-postgres (pg) | 8.11 | Driver PostgreSQL nativo |
-| jsonwebtoken | 9.0 | Tokens JWT |
+| jsonwebtoken | 9.0 | Tokens de sesión stateless |
 | bcryptjs | 2.4 | Hash de contraseñas |
 
 ### Infraestructura
@@ -69,32 +58,25 @@ Proyecto Final de Grado Superior — **Desarrollo de Aplicaciones Multiplataform
 ## Arquitectura
 
 ```
-                    ┌─────────────────────────────────┐
-                    │          Usuario (Navegador)     │
-                    └────────────────┬────────────────┘
-                                     │ :3050
-                    ┌────────────────▼────────────────┐
-                    │      Nginx (fct_frontend)        │
-                    │  Sirve SPA React + proxy /api    │
-                    └───────────┬─────────────────────┘
-                                │ /api → backend:8080
-               ┌────────────────┴────────────────┐
-               │                                 │
-   ┌───────────▼──────────┐         ┌────────────▼──────────┐
-   │  backend_spring      │   ó     │  backend_node          │
-   │  (Spring Boot 3.2)   │         │  (Node.js + Express)   │
-   │  perfil: spring      │         │  perfil: node          │
-   └───────────┬──────────┘         └────────────┬──────────┘
-               │                                 │
-               └────────────────┬────────────────┘
-                                │
-                    ┌───────────▼────────────┐
-                    │   PostgreSQL 15         │
-                    │   (fct_postgres)        │
-                    └────────────────────────┘
+         ┌──────────────────────────────┐
+         │       Usuario (Navegador)    │
+         └───────────────┬──────────────┘
+                         │ :3050
+         ┌───────────────▼──────────────┐
+         │      Nginx (fct_frontend)    │
+         │  Sirve SPA React + proxy /api│
+         └───────────────┬──────────────┘
+                         │ /api → backend:8080
+         ┌───────────────▼──────────────┐
+         │   Node.js + Express          │
+         │   (fct_backend)              │
+         └───────────────┬──────────────┘
+                         │
+         ┌───────────────▼──────────────┐
+         │       PostgreSQL 15          │
+         │       (fct_postgres)         │
+         └──────────────────────────────┘
 ```
-
-Ambos backends comparten la misma base de datos, el mismo secreto JWT y exponen exactamente la misma API REST. El frontend no percibe ninguna diferencia al cambiar entre ellos.
 
 ---
 
@@ -114,7 +96,7 @@ Ambos backends comparten la misma base de datos, el mismo secreto JWT y exponen 
 git clone <url-del-repositorio>
 cd gestion-fct
 
-# 2. Levantar la aplicación (backend Spring Boot por defecto)
+# 2. Levantar la aplicación
 docker compose up -d --build
 ```
 
@@ -131,59 +113,11 @@ La aplicación queda disponible en `http://localhost:3050`
 
 ---
 
-## Cambio de backend
-
-El proyecto incluye dos backends intercambiables mediante perfiles Docker Compose. Ambos implementan la misma API al 100 % y comparten la misma base de datos.
-
-### Opción A — Scripts automáticos
-
-**Windows:**
-```bat
-switch-backend.bat spring
-switch-backend.bat node
-```
-
-**Linux / macOS / WSL:**
-```bash
-chmod +x switch-backend.sh
-./switch-backend.sh spring
-./switch-backend.sh node
-```
-
-### Opción B — Manual
-
-Edita el fichero `.env` y cambia el valor de `COMPOSE_PROFILES`:
-
-```env
-# Opciones: spring | node
-COMPOSE_PROFILES=node
-```
-
-Luego aplica el cambio:
-
-```bash
-docker stop fct_backend && docker rm fct_backend
-docker compose up -d --build
-```
-
-### Verificar el backend activo
-
-```bash
-curl http://localhost:3050/api/health
-# Spring → {"status":"UP","app":"Gestión FCT"}
-# Node   → {"status":"UP","app":"Gestión FCT (Node.js)"}
-```
-
----
-
 ## Estructura del proyecto
 
 ```
 gestion-fct/
-├── .env                          # Perfil activo (spring | node)
-├── docker-compose.yml            # Orquestación con perfiles
-├── switch-backend.sh             # Cambio de backend (Linux/Mac)
-├── switch-backend.bat            # Cambio de backend (Windows)
+├── docker-compose.yml            # Orquestación de servicios
 ├── deploy.sh                     # Script de despliegue en servidor
 │
 ├── docker/
@@ -205,19 +139,7 @@ gestion-fct/
 │       ├── services/api.js       # Axios + servicios REST
 │       └── store/                # Estado global (Zustand)
 │
-├── backend/                      # Spring Boot 3.2 (Java 21)
-│   ├── Dockerfile
-│   ├── pom.xml
-│   └── src/main/java/com/fct/
-│       ├── entity/               # Entidades JPA
-│       ├── repository/           # Repositorios con queries personalizadas
-│       ├── service/              # Lógica de negocio
-│       ├── controller/           # Controladores REST
-│       ├── dto/                  # Objetos de transferencia de datos
-│       ├── security/             # JWT filter y servicio
-│       └── config/               # Security, CORS, inicialización de datos
-│
-└── backend-node/                 # Node.js + Express (alternativo)
+└── backend/                 # Node.js + Express
     ├── Dockerfile
     ├── package.json
     └── src/
@@ -228,7 +150,7 @@ gestion-fct/
         │   └── errorHandler.js   # Manejador global de errores
         ├── routes/               # auth, empresas, alumnos, contactos,
         │                         # profesores, dashboard, health
-        └── utils/pagination.js   # Paginación compatible con Spring Data
+        └── utils/pagination.js   # Formato de paginación
 ```
 
 ---
@@ -337,22 +259,15 @@ npm run dev
 # El proxy de Vite redirige /api → http://localhost:8080
 ```
 
-### Backend Spring Boot
+### Backend
 
-Requiere PostgreSQL local en `localhost:5432` con la base de datos `gestion_fct`.
+Requiere PostgreSQL accesible en `localhost:5432` (puedes levantarlo solo con Docker: `docker compose up -d postgres`).
 
 ```bash
 cd backend
-mvn spring-boot:run
-```
-
-### Backend Node.js
-
-```bash
-cd backend-node
 npm install
 
-# Crear .env local
+# Variables de entorno para desarrollo local
 echo "DATABASE_URL=postgresql://fct_user:fct_secure_202420252026@localhost:5432/gestion_fct" > .env
 echo "JWT_SECRET=nX7mK2pQvR9sL4wY8jF3hD6tA1cE5uB0" >> .env
 echo "JWT_EXPIRATION=86400000" >> .env
@@ -365,14 +280,12 @@ npm run dev
 
 ## Variables de entorno
 
-Editar en `.env` o directamente en `docker-compose.yml` antes de desplegar en producción:
-
 | Variable | Descripción | Valor por defecto |
 |---|---|---|
-| `COMPOSE_PROFILES` | Backend activo (`spring` o `node`) | `node` |
+| `DATABASE_URL` | Cadena de conexión PostgreSQL | — |
 | `JWT_SECRET` | Clave secreta para firma de tokens | Cambiar en producción |
-| `POSTGRES_PASSWORD` | Contraseña de la base de datos | Cambiar en producción |
 | `JWT_EXPIRATION` | Expiración del token en ms | `86400000` (24 h) |
+| `PORT` | Puerto del servidor Node.js | `8080` |
 
 > **Importante:** cambia `JWT_SECRET` y `POSTGRES_PASSWORD` antes de cualquier despliegue en un entorno accesible públicamente.
 
@@ -387,7 +300,7 @@ docker compose up -d --build
 # Ver logs en tiempo real
 docker compose logs -f
 
-# Logs de un servicio concreto
+# Logs del backend
 docker compose logs -f fct_backend
 
 # Reiniciar solo el frontend
