@@ -369,7 +369,7 @@ Editar en `.env` o directamente en `docker-compose.yml` antes de desplegar en pr
 
 | Variable | Descripción | Valor por defecto |
 |---|---|---|
-| `COMPOSE_PROFILES` | Backend activo (`spring` o `node`) | `spring` |
+| `COMPOSE_PROFILES` | Backend activo (`spring` o `node`) | `node` |
 | `JWT_SECRET` | Clave secreta para firma de tokens | Cambiar en producción |
 | `POSTGRES_PASSWORD` | Contraseña de la base de datos | Cambiar en producción |
 | `JWT_EXPIRATION` | Expiración del token en ms | `86400000` (24 h) |
