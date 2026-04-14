@@ -50,7 +50,7 @@ export const contactoService = {
   getById: (id) => api.get(`/contactos/${id}`),
   create: (data) => api.post('/contactos', data),
   update: (id, data) => api.put(`/contactos/${id}`, data),
-  patchResultado: (id, resultado) => api.patch(`/contactos/${id}/resultado`, null, { params: { resultado } }),
+  patchResultado: (id, resultado) => api.patch(`/contactos/${id}/resultado`, { resultado }),
   delete: (id) => api.delete(`/contactos/${id}`),
 }
 

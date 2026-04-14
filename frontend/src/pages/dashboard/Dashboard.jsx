@@ -67,21 +67,15 @@ function BarChart({ data, colorScale, isDark, onBarClick }) {
 
   const maxVal = Math.max(...data.map(d => d.contactos), 1)
 
-  function getTickConfig(max) {
-    if (max <= 8)   return { count: 5, interval: 2 }
-    if (max <= 12)  return { count: 6, interval: 2 }
-    if (max <= 25)  return { count: 6, interval: 5 }
-    if (max <= 60)  return { count: 5, interval: 10 }
-    if (max <= 120) return { count: 5, interval: 25 }
-    if (max <= 300) return { count: 5, interval: 50 }
-    return { count: 5, interval: 100 }
+  // Siempre 6 labels (0 + 5 pasos): busca el intervalo bonito mínimo tal que interval*5 >= max
+  function getNiceInterval(max) {
+    const NICE = [1, 2, 3, 5, 10, 15, 25, 50, 100, 250, 500, 1000]
+    return NICE.find(n => n * 5 >= max) ?? Math.ceil(max / 5 / 1000) * 1000
   }
 
-  const { count, interval } = getTickConfig(maxVal)
-  let niceMax = Math.ceil(maxVal / interval) * interval
-  if (niceMax < maxVal) niceMax += interval
-
-  const ticks = Array.from({ length: count }, (_, i) => i * interval)
+  const interval = getNiceInterval(maxVal)
+  const niceMax  = interval * 5
+  const ticks    = Array.from({ length: 6 }, (_, i) => i * interval)
 
   const VW = 560
   const VH = 160
