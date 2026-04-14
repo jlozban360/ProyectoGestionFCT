@@ -408,29 +408,13 @@ docker compose down -v
 ## Autoría y licencia
 
 **Autor:** José María Lozano Banqueri
-**Titulación:** Ciclo Formativo de Grado Superior — Desarrollo de Aplicaciones Multiplataforma (DAM)
+**Titulación:** CFGS Desarrollo de Aplicaciones Multiplataforma (DAM)
 **Curso:** 2025 / 2026
 
 ---
 
 Este proyecto ha sido desarrollado por **José María Lozano Banqueri** como Proyecto Final del CFGS DAM.
 
-Su finalidad es exclusivamente **educativa y demostrativa**. Queda prohibida su explotación comercial, redistribución o adaptación con fines lucrativos sin el consentimiento expreso y por escrito del autor.
+Se distribuye bajo la licencia **MIT**. Consulta el archivo [LICENSE](./LICENSE) para más información.
 
-```
-Copyright (c) 2026 José María Lozano Banqueri
-
-Se concede permiso para usar, copiar y distribuir este software
-con fines educativos y no comerciales, siempre que se mantenga
-este aviso de copyright y se cite la autoría original.
-
-El uso comercial de este software, total o parcial, requiere
-autorización previa del autor.
-
-EL SOFTWARE SE PROPORCIONA "TAL CUAL", SIN GARANTÍAS DE NINGÚN
-TIPO. EL AUTOR NO SE HACE RESPONSABLE DE NINGÚN DAÑO DERIVADO
-DE SU USO.
-```
-
-Para contacto o consultas relacionadas con el proyecto:
-**GitHub:** [jlozban360](https://github.com/jlozban360)
+**GitHub:** https://github.com/jlozban360
