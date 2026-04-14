@@ -37,15 +37,17 @@ export default function ContactosList() {
   })
   const [modalVisible, setModalVisible] = useState(false)
   const [form] = Form.useForm()
+  const [pagination, setPagination] = useState({ current: 1, pageSize: 10, total: 0 })
 
-  const fetchContactos = async () => {
+  const fetchContactos = async (page = 1, pageSize = pagination.pageSize) => {
     setLoading(true)
     try {
-      const params = { search, tipo: tipoFilter, resultado: resultadoFilter }
+      const params = { search, tipo: tipoFilter, resultado: resultadoFilter, page: page - 1, size: pageSize }
       if (mesFilter)  params.mes  = mesFilter
       if (yearFilter) params.year = yearFilter
       const { data } = await contactoService.getAll(params)
-      setContactos(data.content || data)
+      setContactos(data.content)
+      setPagination(p => ({ ...p, current: page, pageSize, total: data.totalElements }))
     } catch {
       setContactos([])
     } finally {
@@ -68,7 +70,7 @@ export default function ContactosList() {
     }
   }
 
-  useEffect(() => { fetchContactos() }, [search, tipoFilter, resultadoFilter, mesFilter, yearFilter])
+  useEffect(() => { fetchContactos(1, pagination.pageSize) }, [search, tipoFilter, resultadoFilter, mesFilter, yearFilter])
   useEffect(() => { fetchEmpresas() }, [])
 
   const handleCreate = async (values) => {
@@ -180,7 +182,12 @@ export default function ContactosList() {
           columns={columns}
           rowKey="id"
           loading={loading}
-          pagination={{ showTotal: total => `${total} contactos`, showSizeChanger: true }}
+          pagination={{
+            ...pagination,
+            showSizeChanger: true,
+            showTotal: total => `${total} contactos`,
+            onChange: fetchContactos,
+          }}
         />
       </Card>
 

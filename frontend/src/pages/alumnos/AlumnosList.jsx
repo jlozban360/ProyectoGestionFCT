@@ -33,15 +33,17 @@ export default function AlumnosList() {
   const [loading, setLoading] = useState(false)
   const [search, setSearch] = useState('')
   const [cicloFilter, setCicloFilter] = useState(() => searchParams.get('ciclo') || null)
+  const [pagination, setPagination] = useState({ current: 1, pageSize: 10, total: 0 })
   const soloNoDisponible = searchParams.get('noDisponible') === '1'
 
-  const fetchAlumnos = async () => {
+  const fetchAlumnos = async (page = 1, pageSize = pagination.pageSize) => {
     setLoading(true)
     try {
-      const { data } = await alumnoService.getAll({ search, ciclo: cicloFilter })
-      let lista = data.content || data
-      if (soloNoDisponible) lista = lista.filter(a => a.estado !== 'DISPONIBLE')
-      setAlumnos(lista)
+      const params = { search, ciclo: cicloFilter, page: page - 1, size: pageSize }
+      if (soloNoDisponible) params.excluirEstado = 'DISPONIBLE'
+      const { data } = await alumnoService.getAll(params)
+      setAlumnos(data.content)
+      setPagination(p => ({ ...p, current: page, pageSize, total: data.totalElements }))
     } catch {
       let lista = demoAlumnos.filter(a =>
         (!search || `${a.nombre} ${a.apellidos}`.toLowerCase().includes(search.toLowerCase())) &&
@@ -59,7 +61,7 @@ export default function AlumnosList() {
     setSearchParams({})
   }
 
-  useEffect(() => { fetchAlumnos() }, [search, cicloFilter, soloNoDisponible])
+  useEffect(() => { fetchAlumnos(1, pagination.pageSize) }, [search, cicloFilter, soloNoDisponible])
 
   const handleDelete = async (id) => {
     try {
@@ -144,7 +146,18 @@ export default function AlumnosList() {
       </Card>
 
       <Card style={{ borderRadius: 12 }}>
-        <Table dataSource={alumnos} columns={columns} rowKey="id" loading={loading} />
+        <Table
+          dataSource={alumnos}
+          columns={columns}
+          rowKey="id"
+          loading={loading}
+          pagination={{
+            ...pagination,
+            showSizeChanger: true,
+            showTotal: total => `${total} alumnos`,
+            onChange: fetchAlumnos,
+          }}
+        />
       </Card>
     </div>
   )

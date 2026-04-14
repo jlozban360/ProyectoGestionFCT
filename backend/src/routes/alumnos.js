@@ -28,7 +28,7 @@ router.use(authenticate);
 // GET /api/alumnos
 router.get('/', async (req, res, next) => {
   try {
-    const { search, ciclo, page = 0, size = 20 } = req.query;
+    const { search, ciclo, excluirEstado, page = 0, size = 20 } = req.query;
     const offset = Number(page) * Number(size);
     const params = [];
     const conditions = [];
@@ -41,6 +41,10 @@ router.get('/', async (req, res, next) => {
     if (ciclo && VALID_CICLO.includes(ciclo.toUpperCase())) {
       params.push(ciclo.toUpperCase());
       conditions.push(`a.ciclo = $${params.length}`);
+    }
+    if (excluirEstado && VALID_ESTADO.includes(excluirEstado.toUpperCase())) {
+      params.push(excluirEstado.toUpperCase());
+      conditions.push(`a.estado != $${params.length}`);
     }
 
     const where = conditions.length ? 'WHERE ' + conditions.join(' AND ') : '';
