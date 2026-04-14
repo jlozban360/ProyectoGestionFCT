@@ -18,7 +18,10 @@ services:
       timeout: 5s
       retries: 5
 
-  backend:
+  # ── Backend Spring Boot ──────────────────────────────────────────────────────
+  # Activar con: COMPOSE_PROFILES=spring  (o editar .env)
+  backend_spring:
+    profiles: ["spring"]
     build:
       context: ./backend
       dockerfile: Dockerfile
@@ -27,7 +30,7 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    environment: 
+    environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/gestion_fct
       SPRING_DATASOURCE_USERNAME: fct_user
       SPRING_DATASOURCE_PASSWORD: fct_secure_202420252026
@@ -35,7 +38,9 @@ services:
       JWT_SECRET: nX7mK2pQvR9sL4wY8jF3hD6tA1cE5uB0
       JWT_EXPIRATION: 86400000
     networks:
-      - fct_network
+      fct_network:
+        aliases:
+          - backend
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/api/health"]
       interval: 30s
@@ -43,6 +48,35 @@ services:
       retries: 5
       start_period: 60s
 
+  # ── Backend Node.js ──────────────────────────────────────────────────────────
+  # Activar con: COMPOSE_PROFILES=node  (o editar .env)
+  backend_node:
+    profiles: ["node"]
+    build:
+      context: ./backend-node
+      dockerfile: Dockerfile
+    container_name: fct_backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://fct_user:fct_secure_202420252026@postgres:5432/gestion_fct
+      JWT_SECRET: nX7mK2pQvR9sL4wY8jF3hD6tA1cE5uB0
+      JWT_EXPIRATION: 86400000
+      PORT: 8080
+    networks:
+      fct_network:
+        aliases:
+          - backend
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  # ── Frontend ─────────────────────────────────────────────────────────────────
   frontend:
     build:
       context: ./frontend
@@ -51,8 +85,6 @@ services:
         VITE_API_URL: /api
     container_name: fct_frontend
     restart: unless-stopped
-    depends_on:
-      - backend
     ports:
       - "3050:80"
     networks:
