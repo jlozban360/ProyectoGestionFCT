@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { Form, Input, Select, Switch, Button, Card, Row, Col, Typography, Space, message } from 'antd'
 import { ArrowLeftOutlined, SaveOutlined } from '@ant-design/icons'
 import { profesorService } from '../../services/api'
+import { useAuthStore } from '../../store/authStore'
 
 const { Title, Text } = Typography
 const { Option } = Select
@@ -10,14 +11,19 @@ const { Option } = Select
 export default function ProfesorForm() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const isSuperAdmin = useAuthStore(s => s.isSuperAdmin())
   const [form] = Form.useForm()
   const [loading, setLoading] = useState(false)
+  const [rolActual, setRolActual] = useState(null)
   const isEdit = Boolean(id)
 
   useEffect(() => {
     if (isEdit) {
       profesorService.getById(id)
-        .then(({ data }) => form.setFieldsValue(data))
+        .then(({ data }) => {
+          form.setFieldsValue(data)
+          setRolActual(data.rol)
+        })
         .catch(() => {})
     }
   }, [id])
@@ -39,6 +45,9 @@ export default function ProfesorForm() {
       setLoading(false)
     }
   }
+
+  // Rol bloqueado si: el profesor es SUPERADMIN (inmutable) o es ADMIN y quien edita no es SUPERADMIN
+  const rolBloqueado = isEdit && (rolActual === 'SUPERADMIN' || (rolActual === 'ADMIN' && !isSuperAdmin))
 
   return (
     <div>
@@ -78,10 +87,15 @@ export default function ProfesorForm() {
           </Col>
           <Col xs={24} lg={8}>
             <Card title="Permisos y estado" style={{ borderRadius: 12, marginBottom: 16 }}>
-              <Form.Item name="rol" label="Rol">
-                <Select>
+              <Form.Item
+                name="rol"
+                label="Rol"
+                tooltip={rolBloqueado ? 'Este rol no puede modificarse' : undefined}
+              >
+                <Select disabled={rolBloqueado}>
                   <Option value="COLABORADOR">Colaborador</Option>
-                  <Option value="ADMIN">Administrador</Option>
+                  <Option value="ADMIN" disabled={!isSuperAdmin}>Administrador</Option>
+                  {rolActual === 'SUPERADMIN' && <Option value="SUPERADMIN">Superadministrador</Option>}
                 </Select>
               </Form.Item>
               <Form.Item name="activo" label="Activo" valuePropName="checked">

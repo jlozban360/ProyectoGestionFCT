@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuthStore } from './store/authStore'
 import MainLayout from './layouts/MainLayout'
 import LoginPage from './pages/LoginPage'
@@ -21,14 +21,13 @@ function PrivateRoute({ children }) {
 function AdminRoute({ children }) {
   const { token, user } = useAuthStore()
   if (!token) return <Navigate to="/login" replace />
-  if (user?.rol !== 'ADMIN') return <Navigate to="/" replace />
+  if (user?.rol !== 'ADMIN' && user?.rol !== 'SUPERADMIN') return <Navigate to="/" replace />
   return children
 }
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <Routes>
+    <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/" element={
           <PrivateRoute>
@@ -56,6 +55,5 @@ export default function App() {
           <Route path="perfil" element={<PerfilPage />} />
         </Route>
       </Routes>
-    </BrowserRouter>
   )
 }

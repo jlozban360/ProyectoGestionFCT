@@ -24,10 +24,17 @@ async function authenticate(req, res, next) {
 }
 
 function requireAdmin(req, res, next) {
-  if (req.user?.rol !== 'ADMIN') {
+  if (req.user?.rol !== 'ADMIN' && req.user?.rol !== 'SUPERADMIN') {
     return res.status(403).json({ status: 403, message: 'No tienes permisos para realizar esta acción' });
   }
   next();
 }
 
-module.exports = { authenticate, requireAdmin };
+function requireSuperAdmin(req, res, next) {
+  if (req.user?.rol !== 'SUPERADMIN') {
+    return res.status(403).json({ status: 403, message: 'Solo el superadministrador puede realizar esta acción' });
+  }
+  next();
+}
+
+module.exports = { authenticate, requireAdmin, requireSuperAdmin };

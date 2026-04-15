@@ -2,11 +2,11 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import {
   Row, Col, Card, Typography, Tag, Button, Timeline, Modal, Form,
-  Input, Select, DatePicker, message, Tabs, Table, Spin, Descriptions, Space, Avatar
+  Input, Select, DatePicker, message, Tabs, Table, Spin, Descriptions, Space, Avatar, Dropdown
 } from 'antd'
 import {
   ArrowLeftOutlined, EditOutlined, PlusOutlined, PhoneOutlined,
-  MailOutlined, EnvironmentOutlined, TeamOutlined
+  MailOutlined, EnvironmentOutlined, TeamOutlined, DownOutlined
 } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { empresaService, contactoService, alumnoService } from '../../services/api'
@@ -287,16 +287,18 @@ export default function EmpresaDetail() {
                                     <Text type="secondary" style={{ fontSize: 11 }}>
                                       Por {c.profesor?.nombre}
                                     </Text>
-                                    {!esFinal && (
-                                      <Select
-                                        size="small"
-                                        placeholder="Actualizar estado"
-                                        style={{ width: 180 }}
-                                        value={null}
-                                        onChange={(val) => handleAvanzarEstado(c.id, val)}
-                                        options={opciones}
-                                        popupMatchSelectWidth={false}
-                                      />
+                                    {!esFinal && opciones.length > 0 && (
+                                      <Dropdown
+                                        menu={{
+                                          items: opciones.map(o => ({ key: o.value, label: o.label })),
+                                          onClick: ({ key }) => handleAvanzarEstado(c.id, key),
+                                        }}
+                                        trigger={['click']}
+                                      >
+                                        <Button size="small" icon={<DownOutlined />} iconPosition="end">
+                                          Actualizar estado
+                                        </Button>
+                                      </Dropdown>
                                     )}
                                   </div>
                                 </div>

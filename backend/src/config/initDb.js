@@ -79,16 +79,16 @@ async function initDb() {
       )
     `);
 
-    // Admin inicial
+    // Superadmin inicial
     const existing = await client.query("SELECT id FROM profesores WHERE email = 'admin@fct.edu'");
     if (!existing.rows.length) {
       const hashed = await bcrypt.hash('admin123', 10);
       await client.query(
         `INSERT INTO profesores (nombre, email, password, rol, activo, tema)
-         VALUES ('Administrador', 'admin@fct.edu', $1, 'ADMIN', TRUE, 'light')`,
+         VALUES ('Administrador', 'admin@fct.edu', $1, 'SUPERADMIN', TRUE, 'light')`,
         [hashed]
       );
-      console.log('Usuario admin creado: admin@fct.edu / admin123');
+      console.log('Usuario superadmin creado: admin@fct.edu / admin123');
     }
 
     console.log('Base de datos inicializada correctamente');

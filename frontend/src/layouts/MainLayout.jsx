@@ -135,7 +135,7 @@ export default function MainLayout() {
                     {user?.nombre}
                   </div>
                   <div style={{ color: '#64748b', fontSize: 11 }}>
-                    {user?.rol === 'ADMIN' ? 'Administrador' : 'Colaborador'}
+                    {user?.rol === 'SUPERADMIN' ? 'Superadministrador' : user?.rol === 'ADMIN' ? 'Administrador' : 'Colaborador'}
                   </div>
                 </div>
               </div>

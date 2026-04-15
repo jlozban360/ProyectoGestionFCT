@@ -103,11 +103,11 @@ export default function PerfilPage() {
             <Text type="secondary" style={{ display: 'block', marginBottom: 16 }}>{user?.email}</Text>
             <div style={{ marginBottom: 16 }}>
               <span style={{
-                background: user?.rol === 'ADMIN' ? '#f5f3ff' : '#eff6ff',
-                color: user?.rol === 'ADMIN' ? '#7c3aed' : '#2563eb',
+                background: user?.rol === 'SUPERADMIN' ? '#fff1f0' : user?.rol === 'ADMIN' ? '#f5f3ff' : '#eff6ff',
+                color: user?.rol === 'SUPERADMIN' ? '#cf1322' : user?.rol === 'ADMIN' ? '#7c3aed' : '#2563eb',
                 padding: '2px 12px', borderRadius: 20, fontSize: 12, fontWeight: 500,
               }}>
-                {user?.rol === 'ADMIN' ? 'Administrador' : 'Colaborador'}
+                {user?.rol === 'SUPERADMIN' ? 'Superadministrador' : user?.rol === 'ADMIN' ? 'Administrador' : 'Colaborador'}
               </span>
             </div>
 
