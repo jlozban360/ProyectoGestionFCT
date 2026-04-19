@@ -19,6 +19,13 @@ const modalidadColors = {
   MIXTA: 'orange',
 }
 
+const demoEmpresas = [
+  { id: 1, cif: 'B12345678', nombre: 'Accenture Spain', sector: 'Consultoría TI', modalidad: 'FCT', contactoPrincipal: 'María García', telefono: '912345678', activa: true },
+  { id: 2, cif: 'A87654321', nombre: 'Indra Sistemas', sector: 'Software', modalidad: 'DUAL', contactoPrincipal: 'Carlos López', telefono: '913456789', activa: true },
+  { id: 3, cif: 'B11223344', nombre: 'Telefónica', sector: 'Telecomunicaciones', modalidad: 'CONTRATACION', contactoPrincipal: 'Ana Martín', telefono: '914567890', activa: false },
+  { id: 4, cif: 'A99887766', nombre: 'Capgemini', sector: 'Consultoría TI', modalidad: 'FCT', contactoPrincipal: 'Pedro Sanz', telefono: '915678901', activa: true },
+]
+
 export default function EmpresasList() {
   const navigate = useNavigate()
   const [empresas, setEmpresas] = useState([])
@@ -26,32 +33,35 @@ export default function EmpresasList() {
   const [search, setSearch] = useState('')
   const [sectorFilter, setSectorFilter] = useState(null)
   const [pagination, setPagination] = useState({ current: 1, pageSize: 10, total: 0 })
+  const [sortInfo, setSortInfo] = useState({ columnKey: 'nombre', order: 'ascend' })
 
-  const fetchEmpresas = async (page = 1, pageSize) => {
-    const size = pageSize || pagination.pageSize
+  const fetchEmpresas = async (page = 1, pageSize = pagination.pageSize, si = sortInfo) => {
     setLoading(true)
     try {
-      const { data } = await empresaService.getAll({
-        page: page - 1,
-        size,
-        search,
-        sector: sectorFilter,
-      })
+      const params = { page: page - 1, size: pageSize, search, sector: sectorFilter }
+      if (si?.order) {
+        params.sortBy = si.columnKey
+        params.sortDir = si.order === 'ascend' ? 'ASC' : 'DESC'
+      }
+      const { data } = await empresaService.getAll(params)
       setEmpresas(data.content || data)
-      setPagination(p => ({ ...p, total: data.totalElements || data.length, current: page, pageSize: size }))
+      setPagination(p => ({ ...p, total: data.totalElements || data.length, current: page, pageSize }))
     } catch {
-      setEmpresas([
-        { id: 1, cif: 'B12345678', nombre: 'Accenture Spain', sector: 'Consultoría TI', modalidad: 'FCT', contactoPrincipal: 'María García', telefono: '912345678', activa: true },
-        { id: 2, cif: 'A87654321', nombre: 'Indra Sistemas', sector: 'Software', modalidad: 'DUAL', contactoPrincipal: 'Carlos López', telefono: '913456789', activa: true },
-        { id: 3, cif: 'B11223344', nombre: 'Telefónica', sector: 'Telecomunicaciones', modalidad: 'CONTRATACION', contactoPrincipal: 'Ana Martín', telefono: '914567890', activa: false },
-        { id: 4, cif: 'A99887766', nombre: 'Capgemini', sector: 'Consultoría TI', modalidad: 'FCT', contactoPrincipal: 'Pedro Sanz', telefono: '915678901', activa: true },
-      ])
+      setEmpresas(demoEmpresas)
+      setPagination(p => ({ ...p, current: 1, total: demoEmpresas.length }))
     } finally {
       setLoading(false)
     }
   }
 
-  useEffect(() => { fetchEmpresas() }, [search, sectorFilter])
+  useEffect(() => { fetchEmpresas(1, pagination.pageSize) }, [search, sectorFilter])
+
+  const handleTableChange = (pag, _filters, sorter) => {
+    const s = Array.isArray(sorter) ? sorter[0] : sorter
+    const newInfo = s?.order ? { columnKey: s.columnKey ?? s.field, order: s.order } : null
+    setSortInfo(newInfo)
+    fetchEmpresas(pag.current, pag.pageSize, newInfo)
+  }
 
   const handleDelete = async (id) => {
     try {
@@ -65,7 +75,10 @@ export default function EmpresasList() {
 
   const columns = [
     {
-      title: 'Empresa', key: 'empresa',
+      title: 'Empresa',
+      key: 'nombre',
+      sorter: (a, b) => (a.nombre || '').localeCompare(b.nombre || ''),
+      sortOrder: sortInfo?.columnKey === 'nombre' ? sortInfo.order : null,
       render: (_, r) => (
         <div>
           <div style={{ fontWeight: 600 }}>{r.nombre}</div>
@@ -73,19 +86,35 @@ export default function EmpresasList() {
         </div>
       )
     },
-    { title: 'Sector', dataIndex: 'sector', key: 'sector' },
     {
-      title: 'Modalidad', dataIndex: 'modalidad', key: 'modalidad',
+      title: 'Sector',
+      dataIndex: 'sector',
+      key: 'sector',
+      sorter: (a, b) => (a.sector || '').localeCompare(b.sector || ''),
+      sortOrder: sortInfo?.columnKey === 'sector' ? sortInfo.order : null,
+    },
+    {
+      title: 'Modalidad',
+      dataIndex: 'modalidad',
+      key: 'modalidad',
+      sorter: (a, b) => (a.modalidad || '').localeCompare(b.modalidad || ''),
+      sortOrder: sortInfo?.columnKey === 'modalidad' ? sortInfo.order : null,
       render: m => <Tag color={modalidadColors[m] || 'default'}>{m}</Tag>
     },
     { title: 'Contacto', dataIndex: 'contactoPrincipal', key: 'contactoPrincipal' },
     { title: 'Teléfono', dataIndex: 'telefono', key: 'telefono' },
     {
-      title: 'Estado', dataIndex: 'activa', key: 'activa',
+      title: 'Estado',
+      dataIndex: 'activa',
+      key: 'activa',
+      sorter: (a, b) => (a.activa === b.activa ? 0 : a.activa ? -1 : 1),
+      sortOrder: sortInfo?.columnKey === 'activa' ? sortInfo.order : null,
       render: a => <Tag color={a ? 'green' : 'default'}>{a ? 'Activa' : 'Inactiva'}</Tag>
     },
     {
-      title: 'Acciones', key: 'acciones', width: 120,
+      title: 'Acciones',
+      key: 'acciones',
+      width: 120,
       render: (_, r) => (
         <Space>
           <Tooltip title="Ver detalle">
@@ -145,11 +174,11 @@ export default function EmpresasList() {
           columns={columns}
           rowKey="id"
           loading={loading}
+          onChange={handleTableChange}
           pagination={{
             ...pagination,
             showSizeChanger: true,
             showTotal: (total) => `${total} empresas`,
-            onChange: fetchEmpresas,
           }}
         />
       </Card>

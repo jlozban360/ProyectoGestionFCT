@@ -23,6 +23,8 @@ const ROL_CONFIG = {
   COLABORADOR: { color: 'blue', label: 'Colaborador' },
 }
 
+const ROL_ORDER = { SUPERADMIN: 0, ADMIN: 1, COLABORADOR: 2 }
+
 export default function ProfesoresList() {
   const navigate = useNavigate()
   const isSuperAdmin = useAuthStore(s => s.isSuperAdmin())
@@ -74,7 +76,9 @@ export default function ProfesoresList() {
 
   const columns = [
     {
-      title: 'Profesor', key: 'profesor',
+      title: 'Profesor', key: 'nombre',
+      sorter: (a, b) => a.nombre.localeCompare(b.nombre, 'es'),
+      defaultSortOrder: 'ascend',
       render: (_, r) => (
         <Space>
           <Avatar style={{ background: '#f5f3ff', color: '#7c3aed', fontWeight: 700 }}>
@@ -90,6 +94,7 @@ export default function ProfesoresList() {
     { title: 'Teléfono', dataIndex: 'telefono', key: 'telefono' },
     {
       title: 'Rol', dataIndex: 'rol', key: 'rol',
+      sorter: (a, b) => (ROL_ORDER[a.rol] ?? 3) - (ROL_ORDER[b.rol] ?? 3),
       render: r => {
         const cfg = ROL_CONFIG[r] ?? { color: 'default', label: r }
         return <Tag color={cfg.color}>{cfg.label}</Tag>
@@ -97,10 +102,12 @@ export default function ProfesoresList() {
     },
     {
       title: 'Contactos realizados', dataIndex: 'totalContactos', key: 'totalContactos',
+      sorter: (a, b) => (a.totalContactos ?? 0) - (b.totalContactos ?? 0),
       render: n => <strong>{n ?? 0}</strong>
     },
     {
       title: 'Estado', dataIndex: 'activo', key: 'activo',
+      sorter: (a, b) => Number(b.activo) - Number(a.activo),
       render: a => <Tag color={a ? 'green' : 'default'}>{a ? 'Activo' : 'Inactivo'}</Tag>
     },
     {

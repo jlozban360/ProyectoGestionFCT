@@ -32,10 +32,15 @@ const BASE_SELECT = `
 
 router.use(authenticate);
 
+const SORTABLE_CONTACTOS = {
+  fecha: 'c.fecha', empresa: 'e.nombre',
+  tipo: 'c.tipo', resultado: 'c.resultado',
+};
+
 // GET /api/contactos
 router.get('/', async (req, res, next) => {
   try {
-    const { search, tipo, resultado, mes, year, page = 0, size = 20 } = req.query;
+    const { search, tipo, resultado, mes, year, page = 0, size = 20, sortBy, sortDir } = req.query;
     const offset = Number(page) * Number(size);
     const params = [];
     const conditions = [];
@@ -76,11 +81,14 @@ router.get('/', async (req, res, next) => {
     );
     const totalElements = Number(countRows[0].count);
 
+    const orderCol = SORTABLE_CONTACTOS[sortBy] ?? 'c.fecha';
+    const orderDir = sortDir === 'ASC' ? 'ASC' : 'DESC';
+
     params.push(Number(size));
     params.push(offset);
     const { rows } = await pool.query(
       `${BASE_SELECT} ${conditions.length ? 'WHERE ' + conditions.join(' AND ') : ''}
-       ORDER BY c.fecha DESC LIMIT $${params.length - 1} OFFSET $${params.length}`,
+       ORDER BY ${orderCol} ${orderDir} LIMIT $${params.length - 1} OFFSET $${params.length}`,
       params
     );
 

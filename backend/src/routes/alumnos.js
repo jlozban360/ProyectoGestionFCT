@@ -25,10 +25,16 @@ function mapAlumno(row) {
 
 router.use(authenticate);
 
+const SORTABLE_ALUMNOS = {
+  apellidos: 'a.apellidos', nombre: 'a.nombre',
+  ciclo: 'a.ciclo', curso: 'a.curso',
+  estado: 'a.estado', empresa: 'e.nombre',
+};
+
 // GET /api/alumnos
 router.get('/', async (req, res, next) => {
   try {
-    const { search, ciclo, excluirEstado, page = 0, size = 20 } = req.query;
+    const { search, ciclo, excluirEstado, page = 0, size = 20, sortBy, sortDir } = req.query;
     const offset = Number(page) * Number(size);
     const params = [];
     const conditions = [];
@@ -47,9 +53,12 @@ router.get('/', async (req, res, next) => {
       conditions.push(`a.estado != $${params.length}`);
     }
 
+    const orderCol = SORTABLE_ALUMNOS[sortBy] ?? 'a.apellidos';
+    const orderDir = sortDir === 'DESC' ? 'DESC' : 'ASC';
+
     const where = conditions.length ? 'WHERE ' + conditions.join(' AND ') : '';
     const { rows: countRows } = await pool.query(
-      `SELECT COUNT(*) FROM alumnos a ${where}`, params
+      `SELECT COUNT(*) FROM alumnos a LEFT JOIN empresas e ON a.empresa_id = e.id ${where}`, params
     );
     const totalElements = Number(countRows[0].count);
 
@@ -58,7 +67,7 @@ router.get('/', async (req, res, next) => {
     const { rows } = await pool.query(
       `SELECT a.*, e.nombre AS empresa_nombre FROM alumnos a
        LEFT JOIN empresas e ON a.empresa_id = e.id
-       ${where} ORDER BY a.apellidos ASC LIMIT $${params.length - 1} OFFSET $${params.length}`,
+       ${where} ORDER BY ${orderCol} ${orderDir} LIMIT $${params.length - 1} OFFSET $${params.length}`,
       params
     );
 

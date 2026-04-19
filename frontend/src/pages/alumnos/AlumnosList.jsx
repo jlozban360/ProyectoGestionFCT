@@ -34,13 +34,18 @@ export default function AlumnosList() {
   const [search, setSearch] = useState('')
   const [cicloFilter, setCicloFilter] = useState(() => searchParams.get('ciclo') || null)
   const [pagination, setPagination] = useState({ current: 1, pageSize: 10, total: 0 })
+  const [sortInfo, setSortInfo] = useState({ columnKey: 'apellidos', order: 'ascend' })
   const soloNoDisponible = searchParams.get('noDisponible') === '1'
 
-  const fetchAlumnos = async (page = 1, pageSize = pagination.pageSize) => {
+  const fetchAlumnos = async (page = 1, pageSize = pagination.pageSize, si = sortInfo) => {
     setLoading(true)
     try {
       const params = { search, ciclo: cicloFilter, page: page - 1, size: pageSize }
       if (soloNoDisponible) params.excluirEstado = 'DISPONIBLE'
+      if (si?.order) {
+        params.sortBy = si.columnKey
+        params.sortDir = si.order === 'ascend' ? 'ASC' : 'DESC'
+      }
       const { data } = await alumnoService.getAll(params)
       setAlumnos(data.content)
       setPagination(p => ({ ...p, current: page, pageSize, total: data.totalElements }))
@@ -51,6 +56,7 @@ export default function AlumnosList() {
       )
       if (soloNoDisponible) lista = lista.filter(a => a.estado !== 'DISPONIBLE')
       setAlumnos(lista)
+      setPagination(p => ({ ...p, current: 1, total: lista.length }))
     } finally {
       setLoading(false)
     }
@@ -62,6 +68,13 @@ export default function AlumnosList() {
   }
 
   useEffect(() => { fetchAlumnos(1, pagination.pageSize) }, [search, cicloFilter, soloNoDisponible])
+
+  const handleTableChange = (pag, _filters, sorter) => {
+    const s = Array.isArray(sorter) ? sorter[0] : sorter
+    const newInfo = s?.order ? { columnKey: s.columnKey ?? s.field, order: s.order } : null
+    setSortInfo(newInfo)
+    fetchAlumnos(pag.current, pag.pageSize, newInfo)
+  }
 
   const handleDelete = async (id) => {
     try {
@@ -75,11 +88,14 @@ export default function AlumnosList() {
 
   const columns = [
     {
-      title: 'Alumno', key: 'alumno',
+      title: 'Alumno',
+      key: 'apellidos',
+      sorter: (a, b) => a.apellidos.localeCompare(b.apellidos),
+      sortOrder: sortInfo?.columnKey === 'apellidos' ? sortInfo.order : null,
       render: (_, r) => (
         <Space>
           <Avatar style={{ background: '#eff6ff', color: '#2563eb', fontWeight: 700 }}>
-            {r.nombre[0]}
+            {r.nombre?.[0]}
           </Avatar>
           <div>
             <div style={{ fontWeight: 600 }}>{r.nombre} {r.apellidos}</div>
@@ -88,18 +104,45 @@ export default function AlumnosList() {
         </Space>
       )
     },
-    { title: 'Ciclo', dataIndex: 'ciclo', key: 'ciclo', render: c => <Tag>{c}</Tag> },
-    { title: 'Curso', dataIndex: 'curso', key: 'curso', render: c => `${c}º` },
-    { title: 'Empresa', dataIndex: 'empresa', key: 'empresa', render: e => e || <Text type="secondary">Sin asignar</Text> },
     {
-      title: 'Estado', dataIndex: 'estado', key: 'estado',
+      title: 'Ciclo',
+      dataIndex: 'ciclo',
+      key: 'ciclo',
+      sorter: (a, b) => (a.ciclo || '').localeCompare(b.ciclo || ''),
+      sortOrder: sortInfo?.columnKey === 'ciclo' ? sortInfo.order : null,
+      render: c => <Tag>{c}</Tag>
+    },
+    {
+      title: 'Curso',
+      dataIndex: 'curso',
+      key: 'curso',
+      sorter: (a, b) => Number(a.curso) - Number(b.curso),
+      sortOrder: sortInfo?.columnKey === 'curso' ? sortInfo.order : null,
+      render: c => `${c}º`
+    },
+    {
+      title: 'Empresa',
+      dataIndex: 'empresa',
+      key: 'empresa',
+      sorter: (a, b) => (a.empresa || '').localeCompare(b.empresa || ''),
+      sortOrder: sortInfo?.columnKey === 'empresa' ? sortInfo.order : null,
+      render: e => e || <Text type="secondary">Sin asignar</Text>
+    },
+    {
+      title: 'Estado',
+      dataIndex: 'estado',
+      key: 'estado',
+      sorter: (a, b) => (a.estado || '').localeCompare(b.estado || ''),
+      sortOrder: sortInfo?.columnKey === 'estado' ? sortInfo.order : null,
       render: e => {
         const cfg = estadoConfig[e] || { color: 'default', label: e }
         return <Tag color={cfg.color}>{cfg.label}</Tag>
       }
     },
     {
-      title: 'Acciones', key: 'acciones', width: 100,
+      title: 'Acciones',
+      key: 'acciones',
+      width: 100,
       render: (_, r) => (
         <Space>
           <Tooltip title="Editar">
@@ -151,11 +194,11 @@ export default function AlumnosList() {
           columns={columns}
           rowKey="id"
           loading={loading}
+          onChange={handleTableChange}
           pagination={{
             ...pagination,
             showSizeChanger: true,
             showTotal: total => `${total} alumnos`,
-            onChange: fetchAlumnos,
           }}
         />
       </Card>

@@ -35,10 +35,15 @@ function mapEmpresa(row, perfiles = []) {
 
 router.use(authenticate);
 
+const SORTABLE_EMPRESAS = {
+  nombre: 'e.nombre', sector: 'e.sector',
+  modalidad: 'e.modalidad', activa: 'e.activa',
+};
+
 // GET /api/empresas
 router.get('/', async (req, res, next) => {
   try {
-    const { search, sector, page = 0, size = 10 } = req.query;
+    const { search, sector, page = 0, size = 10, sortBy, sortDir } = req.query;
     const offset = Number(page) * Number(size);
     const params = [];
     const conditions = [];
@@ -52,6 +57,9 @@ router.get('/', async (req, res, next) => {
       conditions.push(`e.sector = $${params.length}`);
     }
 
+    const orderCol = SORTABLE_EMPRESAS[sortBy] ?? 'e.nombre';
+    const orderDir = sortDir === 'DESC' ? 'DESC' : 'ASC';
+
     const where = conditions.length ? 'WHERE ' + conditions.join(' AND ') : '';
     const countParams = [...params];
     const { rows: countRows } = await pool.query(
@@ -62,7 +70,7 @@ router.get('/', async (req, res, next) => {
     params.push(Number(size));
     params.push(offset);
     const { rows } = await pool.query(
-      `SELECT e.* FROM empresas e ${where} ORDER BY e.nombre ASC LIMIT $${params.length - 1} OFFSET $${params.length}`,
+      `SELECT e.* FROM empresas e ${where} ORDER BY ${orderCol} ${orderDir} LIMIT $${params.length - 1} OFFSET $${params.length}`,
       params
     );
 

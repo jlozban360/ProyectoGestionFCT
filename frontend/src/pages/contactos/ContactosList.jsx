@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import {
   Table, Input, Select, Tag, Space, Typography, Card, Row, Col, Button, Modal, Form, DatePicker, message
 } from 'antd'
-import { SearchOutlined, PlusOutlined, PhoneOutlined, MailOutlined, EnvironmentOutlined, CloseOutlined } from '@ant-design/icons'
+import { SearchOutlined, PlusOutlined, PhoneOutlined, MailOutlined, EnvironmentOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { contactoService, empresaService } from '../../services/api'
 
@@ -20,7 +20,6 @@ const tipoIcons = { LLAMADA: <PhoneOutlined />, EMAIL: <MailOutlined />, VISITA:
 export default function ContactosList() {
   const [searchParams, setSearchParams] = useSearchParams()
 
-  // Inicializar filtros desde URL (navegación desde dashboard)
   const [contactos, setContactos] = useState([])
   const [empresas, setEmpresas] = useState([])
   const [loading, setLoading] = useState(false)
@@ -38,18 +37,24 @@ export default function ContactosList() {
   const [modalVisible, setModalVisible] = useState(false)
   const [form] = Form.useForm()
   const [pagination, setPagination] = useState({ current: 1, pageSize: 10, total: 0 })
+  const [sortInfo, setSortInfo] = useState({ columnKey: 'fecha', order: 'descend' })
 
-  const fetchContactos = async (page = 1, pageSize = pagination.pageSize) => {
+  const fetchContactos = async (page = 1, pageSize = pagination.pageSize, si = sortInfo) => {
     setLoading(true)
     try {
       const params = { search, tipo: tipoFilter, resultado: resultadoFilter, page: page - 1, size: pageSize }
       if (mesFilter)  params.mes  = mesFilter
       if (yearFilter) params.year = yearFilter
+      if (si?.order) {
+        params.sortBy = si.columnKey
+        params.sortDir = si.order === 'ascend' ? 'ASC' : 'DESC'
+      }
       const { data } = await contactoService.getAll(params)
       setContactos(data.content)
       setPagination(p => ({ ...p, current: page, pageSize, total: data.totalElements }))
     } catch {
       setContactos([])
+      setPagination(p => ({ ...p, current: 1, total: 0 }))
     } finally {
       setLoading(false)
     }
@@ -73,6 +78,13 @@ export default function ContactosList() {
   useEffect(() => { fetchContactos(1, pagination.pageSize) }, [search, tipoFilter, resultadoFilter, mesFilter, yearFilter])
   useEffect(() => { fetchEmpresas() }, [])
 
+  const handleTableChange = (pag, _filters, sorter) => {
+    const s = Array.isArray(sorter) ? sorter[0] : sorter
+    const newInfo = s?.order ? { columnKey: s.columnKey ?? s.field, order: s.order } : null
+    setSortInfo(newInfo)
+    fetchContactos(pag.current, pag.pageSize, newInfo)
+  }
+
   const handleCreate = async (values) => {
     try {
       await contactoService.create({
@@ -90,17 +102,28 @@ export default function ContactosList() {
 
   const columns = [
     {
-      title: 'Fecha', dataIndex: 'fecha', key: 'fecha', width: 110,
-      render: d => dayjs(d).format('DD/MM/YYYY'),
+      title: 'Fecha',
+      dataIndex: 'fecha',
+      key: 'fecha',
+      width: 110,
       sorter: (a, b) => dayjs(a.fecha).unix() - dayjs(b.fecha).unix(),
-      defaultSortOrder: 'descend',
+      sortOrder: sortInfo?.columnKey === 'fecha' ? sortInfo.order : null,
+      render: d => dayjs(d).format('DD/MM/YYYY'),
     },
     {
-      title: 'Empresa', key: 'empresa',
+      title: 'Empresa',
+      key: 'empresa',
+      sorter: (a, b) => (a.empresaNombre || a.empresa?.nombre || '').localeCompare(b.empresaNombre || b.empresa?.nombre || ''),
+      sortOrder: sortInfo?.columnKey === 'empresa' ? sortInfo.order : null,
       render: (_, r) => <strong>{r.empresaNombre || r.empresa?.nombre}</strong>
     },
     {
-      title: 'Tipo', dataIndex: 'tipo', key: 'tipo', width: 110,
+      title: 'Tipo',
+      dataIndex: 'tipo',
+      key: 'tipo',
+      width: 110,
+      sorter: (a, b) => (a.tipo || '').localeCompare(b.tipo || ''),
+      sortOrder: sortInfo?.columnKey === 'tipo' ? sortInfo.order : null,
       render: t => (
         <Space size={4}>
           <Text type="secondary">{tipoIcons[t]}</Text>
@@ -110,15 +133,23 @@ export default function ContactosList() {
     },
     { title: 'Motivo', dataIndex: 'motivo', key: 'motivo' },
     {
-      title: 'Resultado', dataIndex: 'resultado', key: 'resultado', width: 140,
+      title: 'Resultado',
+      dataIndex: 'resultado',
+      key: 'resultado',
+      width: 140,
+      sorter: (a, b) => (a.resultado || '').localeCompare(b.resultado || ''),
+      sortOrder: sortInfo?.columnKey === 'resultado' ? sortInfo.order : null,
       render: r => <Tag color={resultadoColors[r]}>{r?.replace('_', ' ')}</Tag>
     },
     {
-      title: 'Necesidades', dataIndex: 'necesidades', key: 'necesidades',
+      title: 'Necesidades',
+      dataIndex: 'necesidades',
+      key: 'necesidades',
       render: n => n || <Text type="secondary">—</Text>
     },
     {
-      title: 'Profesor', key: 'profesor',
+      title: 'Profesor',
+      key: 'profesor',
       render: (_, r) => <Text style={{ fontSize: 13 }}>{r.profesor?.nombre}</Text>
     },
   ]
@@ -182,11 +213,11 @@ export default function ContactosList() {
           columns={columns}
           rowKey="id"
           loading={loading}
+          onChange={handleTableChange}
           pagination={{
             ...pagination,
             showSizeChanger: true,
             showTotal: total => `${total} contactos`,
-            onChange: fetchContactos,
           }}
         />
       </Card>
