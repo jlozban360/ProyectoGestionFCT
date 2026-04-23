@@ -288,7 +288,135 @@ async function seedDb(client) {
     ]));
   }
 
-  console.log('Seed completado: ~300 empresas · ~200 profesores · 600 alumnos · 1876 contactos (2024-2026)');
+  // ── 7. Anuncios (tablón) ─────────────────────────────────────────────────
+  const anunciosCount = await client.query('SELECT COUNT(*) FROM anuncios');
+  if (Number(anunciosCount.rows[0].count) === 0) {
+    const adminId  = (await client.query("SELECT id FROM profesores WHERE email='admin@fct.edu'")).rows[0]?.id;
+    const prof1Id  = (await client.query("SELECT id FROM profesores WHERE email='mgonzalez@fct.edu'")).rows[0]?.id;
+    const prof2Id  = (await client.query("SELECT id FROM profesores WHERE email='lmartinez@fct.edu'")).rows[0]?.id;
+    const prof3Id  = (await client.query("SELECT id FROM profesores WHERE email='clopez@fct.edu'")).rows[0]?.id;
+    const prof4Id  = (await client.query("SELECT id FROM profesores WHERE email='jsanchez@fct.edu'")).rows[0]?.id;
+    const prof5Id  = (await client.query("SELECT id FROM profesores WHERE email='afernandez@fct.edu'")).rows[0]?.id;
+    const prof6Id  = (await client.query("SELECT id FROM profesores WHERE email='pruiz@fct.edu'")).rows[0]?.id;
+    const prof8Id  = (await client.query("SELECT id FROM profesores WHERE email='ralvarez@fct.edu'")).rows[0]?.id;
+    const adminAlt = (await client.query("SELECT id FROM profesores WHERE email='fcano@fct.edu'")).rows[0]?.id;
+
+    const emp1Id  = (await client.query("SELECT id FROM empresas WHERE cif='A28000001'")).rows[0]?.id; // Indra
+    const emp2Id  = (await client.query("SELECT id FROM empresas WHERE cif='A28000002'")).rows[0]?.id; // Telefónica
+    const emp4Id  = (await client.query("SELECT id FROM empresas WHERE cif='B28000004'")).rows[0]?.id; // DataCloud
+    const emp10Id = (await client.query("SELECT id FROM empresas WHERE cif='A28000010'")).rows[0]?.id; // Accenture
+    const emp18Id = (await client.query("SELECT id FROM empresas WHERE cif='B08000018'")).rows[0]?.id; // Typeform
+    const emp25Id = (await client.query("SELECT id FROM empresas WHERE cif='B46000025'")).rows[0]?.id; // Novait
+
+    const ANUNCIOS_SEED = [
+      {
+        titulo: 'Indra Sistemas busca 3 alumnos DAM para prácticas',
+        contenido: 'Indra Sistemas abre 3 plazas de prácticas FCT para alumnos de 2º DAM. Perfiles junior con conocimientos en Java, Spring Boot y bases de datos relacionales. El proyecto se desarrollará en las oficinas de Alcobendas. Alta posibilidad de contratación al finalizar.',
+        tipo: 'OFERTA', ciclo: 'DAM', num_plazas: 3, empresa_id: emp1Id, autor_id: prof1Id,
+        activo: true, destacado: true, fecha_inicio: '2026-04-01', fecha_fin: '2026-06-30',
+        created_at: '2026-04-10 10:00:00',
+      },
+      {
+        titulo: '¡URGENTE! Empresa cancela plazas — necesitamos alternativa',
+        contenido: 'Grupo Soluciones IT ha cancelado sus 3 plazas previstas para mayo. Necesitamos encontrar empresas alternativas para los alumnos DAM ya comprometidos. Por favor, si conocéis empresas interesadas, contactad con el departamento a la mayor brevedad posible.',
+        tipo: 'URGENTE', ciclo: null, num_plazas: null, empresa_id: null, autor_id: adminAlt ?? adminId,
+        activo: true, destacado: true, fecha_inicio: null, fecha_fin: null,
+        created_at: '2026-04-20 08:00:00',
+      },
+      {
+        titulo: 'ASIR — 3 alumnos sin empresa, plazo cierra en 10 días',
+        contenido: 'Quedan 3 alumnos de 2º ASIR sin empresa asignada y el plazo límite finaliza en 10 días. Conocimientos en redes Cisco, virtualización VMware, administración Windows Server y Linux. Se admiten empresas fuera de Madrid con ayuda para desplazamiento.',
+        tipo: 'URGENTE', ciclo: 'ASIR', num_plazas: 3, empresa_id: null, autor_id: prof6Id ?? adminId,
+        activo: true, destacado: true, fecha_inicio: null, fecha_fin: '2026-04-30',
+        created_at: '2026-04-21 08:30:00',
+      },
+      {
+        titulo: 'Telefónica Tech — 2 plazas DAW disponibles',
+        contenido: 'Telefónica Tech abre 2 plazas de prácticas para alumnos de 2º DAW. Se requiere conocimiento de React, TypeScript y desarrollo de APIs REST con Node.js. Modalidad presencial en la sede de Gran Vía, Madrid. Incorporación en mayo.',
+        tipo: 'OFERTA', ciclo: 'DAW', num_plazas: 2, empresa_id: emp2Id, autor_id: prof2Id,
+        activo: true, destacado: false, fecha_inicio: '2026-05-01', fecha_fin: '2026-07-31',
+        created_at: '2026-04-15 09:30:00',
+      },
+      {
+        titulo: '5 alumnos DAW disponibles para prácticas inmediatas',
+        contenido: 'El departamento tiene 5 alumnos de 2º DAW disponibles para comenzar prácticas de forma inmediata. Perfiles con experiencia en React, Vue.js y desarrollo de APIs REST. Se pueden asignar a empresas de cualquier ciudad con modalidad remota o presencial.',
+        tipo: 'DEMANDA', ciclo: 'DAW', num_plazas: 5, empresa_id: null, autor_id: prof3Id,
+        activo: true, destacado: false, fecha_inicio: null, fecha_fin: null,
+        created_at: '2026-04-18 11:00:00',
+      },
+      {
+        titulo: 'Accenture España — convocatoria abierta para todos los ciclos',
+        contenido: 'Accenture España abre su convocatoria anual de prácticas con 8 plazas disponibles para alumnos de todos los ciclos: DAM, DAW, ASIR y SMR. Las entrevistas se realizarán la semana del 5 de mayo en sus oficinas de Joaquín Costa. Ambiente internacional y proyectos de gran escala.',
+        tipo: 'OFERTA', ciclo: null, num_plazas: 8, empresa_id: emp10Id, autor_id: prof4Id,
+        activo: true, destacado: false, fecha_inicio: '2026-05-15', fecha_fin: '2026-09-15',
+        created_at: '2026-04-17 16:30:00',
+      },
+      {
+        titulo: 'Alumnos SMR buscan empresa — 4 plazas libres',
+        contenido: '4 alumnos de 2º SMR todavía sin empresa asignada. Conocimientos en redes, sistemas Windows/Linux, virtualización con Hyper-V y soporte técnico nivel 1 y 2. Disponibles desde el 1 de mayo. Se admiten empresas fuera del área metropolitana de Madrid.',
+        tipo: 'DEMANDA', ciclo: 'SMR', num_plazas: 4, empresa_id: null, autor_id: prof5Id,
+        activo: true, destacado: false, fecha_inicio: null, fecha_fin: null,
+        created_at: '2026-04-19 10:15:00',
+      },
+      {
+        titulo: 'DataCloud Spain busca perfil Python/Data Science',
+        contenido: 'DataCloud Spain necesita un alumno de 2º DAM con conocimientos de Python, pandas y bases de datos relacionales (PostgreSQL). El proyecto trata sobre migración de datos a la nube. Posibilidad real de incorporación directa al finalizar las prácticas.',
+        tipo: 'OFERTA', ciclo: 'DAM', num_plazas: 1, empresa_id: emp4Id, autor_id: prof8Id ?? adminId,
+        activo: true, destacado: false, fecha_inicio: '2026-05-01', fecha_fin: '2026-07-31',
+        created_at: '2026-04-16 13:00:00',
+      },
+      {
+        titulo: 'Reunión coordinación FCT — 30 de abril a las 10:00h',
+        contenido: 'Convocatoria de reunión de coordinación del departamento FCT para el miércoles 30 de abril a las 10:00h en la sala de reuniones B-204. Asistencia obligatoria para todos los tutores con alumnos asignados. Se revisará el estado actual de colocaciones y los casos pendientes.',
+        tipo: 'INFO', ciclo: null, num_plazas: null, empresa_id: null, autor_id: adminAlt ?? adminId,
+        activo: true, destacado: false, fecha_inicio: null, fecha_fin: null,
+        created_at: '2026-04-21 14:00:00',
+      },
+      {
+        titulo: 'Nuevos convenios firmados con el parque tecnológico de Paterna',
+        contenido: 'El departamento ha firmado nuevos convenios de colaboración con 5 empresas del parque tecnológico de Paterna: Lynx Tech Solutions, iQBit, Novait, Apliter Tecnología y Thinkingroup. Podéis consultar los detalles de cada empresa en el apartado Empresas del sistema.',
+        tipo: 'INFO', ciclo: null, num_plazas: null, empresa_id: null, autor_id: prof1Id,
+        activo: true, destacado: false, fecha_inicio: null, fecha_fin: null,
+        created_at: '2026-04-22 09:00:00',
+      },
+      {
+        titulo: 'Recordatorio: entrega de memorias — fecha límite 15 de mayo',
+        contenido: 'Recordatorio importante: la fecha límite para la entrega de memorias de prácticas es el 15 de mayo. Los tutores de empresa deben tener cumplimentada la evaluación intermedia antes del 30 de abril. Los alumnos que no entreguen en plazo no podrán ser evaluados en la convocatoria ordinaria.',
+        tipo: 'INFO', ciclo: null, num_plazas: null, empresa_id: null, autor_id: adminAlt ?? adminId,
+        activo: true, destacado: false, fecha_inicio: null, fecha_fin: '2026-05-15',
+        created_at: '2026-04-20 12:00:00',
+      },
+      {
+        titulo: 'Novait — empresa interesada en contratar tras prácticas',
+        contenido: 'Novait (Valencia) ha manifestado interés en contratar a los alumnos de prácticas una vez finalizado el período. Empresa pequeña con muy buen ambiente y proyectos modernos con tecnologías actuales (React, Node.js, PostgreSQL). Plazas limitadas, se asignarán por orden de solicitud.',
+        tipo: 'OFERTA', ciclo: 'DAW', num_plazas: 2, empresa_id: emp25Id, autor_id: prof2Id,
+        activo: true, destacado: false, fecha_inicio: '2026-05-01', fecha_fin: '2026-08-31',
+        created_at: '2026-04-23 08:00:00',
+      },
+      {
+        titulo: 'Typeform Barcelona — oferta expirada (referencia)',
+        contenido: 'Typeform (Barcelona) buscaba 2 alumnos de DAW con nivel B2 de inglés. Trabajo en equipo internacional con perfiles de toda Europa. La oferta ya ha sido cubierta; se deja como referencia para futuras convocatorias similares.',
+        tipo: 'OFERTA', ciclo: 'DAW', num_plazas: 2, empresa_id: emp18Id, autor_id: prof8Id ?? adminId,
+        activo: false, destacado: false, fecha_inicio: '2026-03-01', fecha_fin: '2026-04-01',
+        created_at: '2026-03-10 10:00:00',
+      },
+    ];
+
+    for (const a of ANUNCIOS_SEED) {
+      await client.query(
+        `INSERT INTO anuncios
+           (titulo, contenido, tipo, ciclo, num_plazas, empresa_id, autor_id, activo, destacado, fecha_inicio, fecha_fin, created_at, updated_at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$12)`,
+        [
+          a.titulo, a.contenido, a.tipo, a.ciclo ?? null, a.num_plazas ?? null,
+          a.empresa_id ?? null, a.autor_id ?? null, a.activo, a.destacado,
+          a.fecha_inicio ?? null, a.fecha_fin ?? null, a.created_at,
+        ]
+      );
+    }
+  }
+
+  console.log('Seed completado: ~300 empresas · ~200 profesores · 600 alumnos · 1876 contactos (2024-2026) · 13 anuncios');
 }
 
 module.exports = seedDb;

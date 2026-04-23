@@ -74,6 +74,16 @@ export const profesorService = {
   delete: (id) => api.delete(`/profesores/${id}`),
 }
 
+// ── Anuncios ─────────────────────────────────────────────────────────
+export const anuncioService = {
+  getAll:          (params) => api.get('/anuncios', { params }),
+  getById:         (id)     => api.get(`/anuncios/${id}`),
+  create:          (data)   => api.post('/anuncios', data),
+  update:          (id, data) => api.put(`/anuncios/${id}`, data),
+  delete:          (id)     => api.delete(`/anuncios/${id}`),
+  toggleDestacado: (id)     => api.patch(`/anuncios/${id}/destacar`),
+}
+
 // ── Dashboard ───────────────────────────────────────────────────────
 export const dashboardService = {
   getStats: () => api.get('/dashboard/stats'),

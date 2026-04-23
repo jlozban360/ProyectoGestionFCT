@@ -79,6 +79,25 @@ async function initDb() {
       )
     `);
 
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS anuncios (
+        id           SERIAL PRIMARY KEY,
+        titulo       VARCHAR(255) NOT NULL,
+        contenido    TEXT NOT NULL,
+        tipo         VARCHAR(20) NOT NULL DEFAULT 'INFO',
+        ciclo        VARCHAR(10),
+        num_plazas   INTEGER,
+        empresa_id   INTEGER REFERENCES empresas(id) ON DELETE SET NULL,
+        autor_id     INTEGER REFERENCES profesores(id) ON DELETE SET NULL,
+        activo       BOOLEAN NOT NULL DEFAULT TRUE,
+        destacado    BOOLEAN NOT NULL DEFAULT FALSE,
+        fecha_inicio DATE,
+        fecha_fin    DATE,
+        created_at   TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at   TIMESTAMP NOT NULL DEFAULT NOW()
+      )
+    `);
+
     // Superadmin inicial
     const existing = await client.query("SELECT id FROM profesores WHERE email = 'admin@fct.edu'");
     if (!existing.rows.length) {

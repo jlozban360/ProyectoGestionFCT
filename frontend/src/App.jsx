@@ -11,6 +11,8 @@ import AlumnoForm from './pages/alumnos/AlumnoForm'
 import ProfesoresList from './pages/profesores/ProfesoresList'
 import ProfesorForm from './pages/profesores/ProfesorForm'
 import ContactosList from './pages/contactos/ContactosList'
+import AnunciosList from './pages/anuncios/AnunciosList'
+import AnuncioForm from './pages/anuncios/AnuncioForm'
 import PerfilPage from './pages/perfil/PerfilPage'
 
 function PrivateRoute({ children }) {
@@ -52,6 +54,9 @@ export default function App() {
             <AdminRoute><ProfesorForm /></AdminRoute>
           } />
           <Route path="contactos" element={<ContactosList />} />
+          <Route path="anuncios" element={<AnunciosList />} />
+          <Route path="anuncios/nuevo" element={<AnuncioForm />} />
+          <Route path="anuncios/:id/editar" element={<AnuncioForm />} />
           <Route path="perfil" element={<PerfilPage />} />
         </Route>
       </Routes>

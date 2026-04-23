@@ -4,7 +4,7 @@ import { Layout, Menu, Avatar, Dropdown, Typography, Space, Tooltip } from 'antd
 import {
   DashboardOutlined, BankOutlined, TeamOutlined, UserOutlined,
   PhoneOutlined, LogoutOutlined, MenuFoldOutlined, MenuUnfoldOutlined,
-  SettingOutlined, SunOutlined, MoonOutlined
+  SettingOutlined, SunOutlined, MoonOutlined, SoundOutlined,
 } from '@ant-design/icons'
 import { useAuthStore } from '../store/authStore'
 import { useThemeStore } from '../store/themeStore'
@@ -16,6 +16,7 @@ const { Text } = Typography
 
 const menuItems = [
   { key: '/', icon: <DashboardOutlined />, label: 'Dashboard' },
+  { key: '/anuncios', icon: <SoundOutlined />, label: 'Tablón de Anuncios' },
   { key: '/empresas', icon: <BankOutlined />, label: 'Empresas' },
   { key: '/contactos', icon: <PhoneOutlined />, label: 'Contactos' },
   { key: '/alumnos', icon: <TeamOutlined />, label: 'Alumnos' },

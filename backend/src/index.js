@@ -22,6 +22,7 @@ app.use('/api/alumnos',    require('./routes/alumnos'));
 app.use('/api/contactos',  require('./routes/contactos'));
 app.use('/api/profesores', require('./routes/profesores'));
 app.use('/api/dashboard',  require('./routes/dashboard'));
+app.use('/api/anuncios',   require('./routes/anuncios'));
 
 app.use(errorHandler);
 
