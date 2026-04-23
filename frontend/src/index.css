@@ -22,6 +22,18 @@ html, body {
   letter-spacing: 0.04em;
 }
 
+/* Sorted column: highlight only the header, not the body cells.
+   :not(:hover) lets the row hover color apply normally */
+.ant-table-tbody > tr:not(:hover) > td.ant-table-column-sort {
+  background: transparent;
+}
+
+/* More breathing room between rows */
+.ant-table-tbody > tr > td {
+  padding-top: 16px !important;
+  padding-bottom: 16px !important;
+}
+
 .status-badge {
   display: inline-flex;
   align-items: center;

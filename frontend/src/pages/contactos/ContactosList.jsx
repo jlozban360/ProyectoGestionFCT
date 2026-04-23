@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useSearchParams, useNavigate } from 'react-router-dom'
 import {
   Table, Input, Select, Tag, Space, Typography, Card, Row, Col, Button, Modal, Form, DatePicker, message
 } from 'antd'
@@ -18,6 +18,7 @@ const resultadoColors = { INTERESADO: 'green', PENDIENTE: 'orange', NO_INTERESAD
 const tipoIcons = { LLAMADA: <PhoneOutlined />, EMAIL: <MailOutlined />, VISITA: <EnvironmentOutlined /> }
 
 export default function ContactosList() {
+  const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
 
   const [contactos, setContactos] = useState([])
@@ -68,7 +69,7 @@ export default function ContactosList() {
 
   const fetchEmpresas = async () => {
     try {
-      const { data } = await empresaService.getAll({})
+      const { data } = await empresaService.getAll({ size: 500 })
       setEmpresas(data.content || data)
     } catch {
       setEmpresas([])
@@ -113,9 +114,15 @@ export default function ContactosList() {
     {
       title: 'Empresa',
       key: 'empresa',
-      sorter: (a, b) => (a.empresaNombre || a.empresa?.nombre || '').localeCompare(b.empresaNombre || b.empresa?.nombre || ''),
+      width: 180,
+      sorter: (a, b) => (a.empresaNombre || '').localeCompare(b.empresaNombre || ''),
       sortOrder: sortInfo?.columnKey === 'empresa' ? sortInfo.order : null,
-      render: (_, r) => <strong>{r.empresaNombre || r.empresa?.nombre}</strong>
+      render: (_, r) => (
+        <div>
+          <div style={{ fontWeight: 600 }}>{r.empresaNombre}</div>
+          <Text type="secondary" style={{ fontSize: 12 }}>{r.empresaCif ?? '—'}</Text>
+        </div>
+      )
     },
     {
       title: 'Tipo',
@@ -131,7 +138,13 @@ export default function ContactosList() {
         </Space>
       )
     },
-    { title: 'Motivo', dataIndex: 'motivo', key: 'motivo' },
+    {
+      title: 'Motivo',
+      dataIndex: 'motivo',
+      key: 'motivo',
+      width: 200,
+      ellipsis: { showTitle: true },
+    },
     {
       title: 'Resultado',
       dataIndex: 'resultado',
@@ -142,15 +155,18 @@ export default function ContactosList() {
       render: r => <Tag color={resultadoColors[r]}>{r?.replace('_', ' ')}</Tag>
     },
     {
+      title: 'Profesor',
+      key: 'profesor',
+      width: 150,
+      render: (_, r) => <Text style={{ fontSize: 13 }}>{r.profesor?.nombre}</Text>
+    },
+    {
       title: 'Necesidades',
       dataIndex: 'necesidades',
       key: 'necesidades',
+      width: 180,
+      ellipsis: { showTitle: true },
       render: n => n || <Text type="secondary">—</Text>
-    },
-    {
-      title: 'Profesor',
-      key: 'profesor',
-      render: (_, r) => <Text style={{ fontSize: 13 }}>{r.profesor?.nombre}</Text>
     },
   ]
 
@@ -182,7 +198,7 @@ export default function ContactosList() {
         <Row gutter={12}>
           <Col flex={1}>
             <Input
-              placeholder="Buscar por empresa, motivo..."
+              placeholder="Buscar por empresa, motivo, necesidades, profesor que hizo el contacto..."
               prefix={<SearchOutlined />}
               value={search} onChange={e => setSearch(e.target.value)} allowClear
             />
@@ -214,6 +230,8 @@ export default function ContactosList() {
           rowKey="id"
           loading={loading}
           onChange={handleTableChange}
+          onRow={r => ({ onClick: () => navigate(`/empresas/${r.empresaId}`), style: { cursor: 'pointer' } })}
+          scroll={{ x: 1160 }}
           pagination={{
             ...pagination,
             showSizeChanger: true,

@@ -23,7 +23,7 @@ const TIPO_LABELS = {
 export default function AnuncioForm() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { isAdmin } = useAuthStore()
+  const { user, isAdmin } = useAuthStore()
   const [form] = Form.useForm()
   const [loading, setLoading] = useState(false)
   const [empresas, setEmpresas] = useState([])
@@ -40,6 +40,11 @@ export default function AnuncioForm() {
     if (isEdit) {
       anuncioService.getById(id)
         .then(({ data }) => {
+          if (!isAdmin() && data.autorId !== user?.id) {
+            message.error('No tienes permiso para editar este anuncio')
+            navigate('/anuncios')
+            return
+          }
           form.setFieldsValue({
             ...data,
             fechaInicio: data.fechaInicio ? dayjs(data.fechaInicio) : null,

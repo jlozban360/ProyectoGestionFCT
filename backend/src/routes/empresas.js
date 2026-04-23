@@ -43,18 +43,26 @@ const SORTABLE_EMPRESAS = {
 // GET /api/empresas
 router.get('/', async (req, res, next) => {
   try {
-    const { search, sector, page = 0, size = 10, sortBy, sortDir } = req.query;
+    const { search, sector, modalidad, activa, page = 0, size = 10, sortBy, sortDir } = req.query;
     const offset = Number(page) * Number(size);
     const params = [];
     const conditions = [];
 
     if (search) {
       params.push(`%${search}%`);
-      conditions.push(`(e.nombre ILIKE $${params.length} OR e.cif ILIKE $${params.length})`);
+      conditions.push(`(e.nombre ILIKE $${params.length} OR e.cif ILIKE $${params.length} OR e.contacto_principal ILIKE $${params.length} OR e.telefono ILIKE $${params.length})`);
     }
     if (sector) {
       params.push(sector);
       conditions.push(`e.sector = $${params.length}`);
+    }
+    if (modalidad && VALID_MODALIDAD.includes(modalidad.toUpperCase())) {
+      params.push(modalidad.toUpperCase());
+      conditions.push(`e.modalidad = $${params.length}`);
+    }
+    if (activa === 'true') {
+      params.push(true);
+      conditions.push(`e.activa = $${params.length}`);
     }
 
     const orderCol = SORTABLE_EMPRESAS[sortBy] ?? 'e.nombre';
@@ -198,7 +206,7 @@ router.delete('/:id', async (req, res, next) => {
 router.get('/:id/contactos', async (req, res, next) => {
   try {
     const { rows } = await pool.query(
-      `SELECT c.*, e.nombre AS empresa_nombre,
+      `SELECT c.*, e.nombre AS empresa_nombre, e.cif AS empresa_cif,
               p.id AS prof_id, p.nombre AS prof_nombre, p.email AS prof_email
        FROM contactos c
        JOIN empresas e ON c.empresa_id = e.id
@@ -229,6 +237,7 @@ function mapContacto(row) {
     id: row.id,
     empresaId: row.empresa_id,
     empresaNombre: row.empresa_nombre,
+    empresaCif: row.empresa_cif,
     profesor: row.prof_id ? { id: row.prof_id, nombre: row.prof_nombre, email: row.prof_email } : null,
     fecha: row.fecha,
     tipo: row.tipo,

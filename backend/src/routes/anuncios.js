@@ -45,9 +45,14 @@ router.get('/', async (req, res, next) => {
     const params = [];
     const conditions = [];
 
-    if (activo !== 'all') {
-      params.push(activo === 'false' ? false : true);
+    if (activo === 'true') {
+      params.push(true);
       conditions.push(`an.activo = $${params.length}`);
+    } else if (activo === 'false') {
+      // inactivos normales + chinchetas siempre visibles
+      params.push(false);
+      params.push(true);
+      conditions.push(`(an.activo = $${params.length - 1} OR an.destacado = $${params.length})`);
     }
     if (search) {
       params.push(`%${search}%`);

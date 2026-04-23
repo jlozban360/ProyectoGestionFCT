@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Typography, Button, Card, Row, Col, Input, Select, Tag, Space,
@@ -105,10 +105,16 @@ const DEMO_ANUNCIOS = [
     activo: true, destacado: false, fechaInicio: '2026-05-01', fechaFin: '2026-08-31', createdAt: '2026-04-23T08:00:00Z',
   },
   {
-    id: 13, titulo: 'Typeform Barcelona — oferta expirada (referencia)', tipo: 'OFERTA', ciclo: 'DAW', numPlazas: 2,
+    id: 13, titulo: 'Typeform Barcelona — oferta cubierta (inactiva)', tipo: 'OFERTA', ciclo: 'DAW', numPlazas: 2,
     empresa: 'Typeform', empresaId: 18, autor: 'Roberto Álvarez', autorId: 8,
-    contenido: 'Typeform buscaba 2 alumnos DAW con nivel B2 de inglés. La oferta ya ha sido cubierta; se deja como referencia para futuras convocatorias similares.',
-    activo: false, destacado: false, fechaInicio: '2026-03-01', fechaFin: '2026-04-01', createdAt: '2026-03-10T10:00:00Z',
+    contenido: 'Typeform buscaba 2 alumnos DAW con nivel B2 de inglés. La oferta ya ha sido cubierta; se mantiene inactiva como referencia para futuras convocatorias similares.',
+    activo: false, destacado: false, fechaInicio: '2026-03-01', fechaFin: '2026-04-01', createdAt: '2026-04-22T07:00:00Z',
+  },
+  {
+    id: 14, titulo: 'Sopra Steria — plazas cubiertas para este curso', tipo: 'OFERTA', ciclo: null, numPlazas: 4,
+    empresa: 'Sopra Steria', empresaId: null, autor: 'Carmen López', autorId: 3,
+    contenido: 'Sopra Steria ha completado su cupo de alumnos en prácticas para este curso. Se deja el anuncio inactivo como registro. Previsiblemente volverán a ofrecer plazas el próximo año.',
+    activo: false, destacado: false, fechaInicio: null, fechaFin: null, createdAt: '2026-04-21T07:00:00Z',
   },
 ]
 
@@ -127,51 +133,49 @@ export default function AnunciosList() {
   const [pagination, setPagination]       = useState({ current: 1, pageSize: 9, total: 0 })
   const [detailAnuncio, setDetailAnuncio] = useState(null)
 
-  const applyDemoFilters = useCallback((page = 1, pageSize = 9) => {
-    const filtered = DEMO_ANUNCIOS.filter(a => {
-      if (soloActivos && !a.activo) return false
-      if (filterTipo  && a.tipo  !== filterTipo)  return false
-      if (filterCiclo && a.ciclo !== filterCiclo) return false
-      if (search) {
-        const q = search.toLowerCase()
-        if (!a.titulo.toLowerCase().includes(q) && !a.contenido.toLowerCase().includes(q)) return false
-      }
-      return true
-    })
-    filtered.sort((a, b) => Number(b.destacado) - Number(a.destacado) || new Date(b.createdAt) - new Date(a.createdAt))
-    setAnuncios(filtered.slice((page - 1) * pageSize, page * pageSize))
-    setPagination(p => ({ ...p, current: page, pageSize, total: filtered.length }))
-  }, [search, filterTipo, filterCiclo, soloActivos])
-
-  const fetchAnuncios = useCallback(async (page = 1, pageSize = 9) => {
+  // Todos los filtros se pasan explícitamente → sin closures stale posibles
+  const doFetch = async (page, pageSize, sa, ft, fc, s) => {
     setLoading(true)
     try {
       const { data } = await anuncioService.getAll({
         page: page - 1,
         size: pageSize,
-        ...(search      && { search }),
-        ...(filterTipo  && { tipo:  filterTipo }),
-        ...(filterCiclo && { ciclo: filterCiclo }),
-        activo: soloActivos ? 'true' : 'all',
+        ...(s  && { search: s }),
+        ...(ft && { tipo:   ft }),
+        ...(fc && { ciclo:  fc }),
+        ...(sa && { activo: 'true' }),
       })
       setAnuncios(data.content)
       setPagination(p => ({ ...p, current: page, pageSize, total: data.totalElements }))
     } catch {
-      applyDemoFilters(page, pageSize)
+      const filtered = DEMO_ANUNCIOS.filter(a => {
+        if (sa && !a.activo) return false
+        if (ft && a.tipo  !== ft) return false
+        if (fc && a.ciclo !== fc) return false
+        if (s) {
+          const q = s.toLowerCase()
+          if (!a.titulo.toLowerCase().includes(q) && !a.contenido.toLowerCase().includes(q)) return false
+        }
+        return true
+      })
+      filtered.sort((a, b) => Number(b.destacado) - Number(a.destacado) || new Date(b.createdAt) - new Date(a.createdAt))
+      setAnuncios(filtered.slice((page - 1) * pageSize, page * pageSize))
+      setPagination(p => ({ ...p, current: page, pageSize, total: filtered.length }))
     } finally {
       setLoading(false)
     }
-  }, [search, filterTipo, filterCiclo, soloActivos, applyDemoFilters])
+  }
 
+  // El useEffect pasa todos los valores del render actual como argumentos
   useEffect(() => {
-    fetchAnuncios(1, pagination.pageSize)
+    doFetch(1, pagination.pageSize, soloActivos, filterTipo, filterCiclo, search)
   }, [search, filterTipo, filterCiclo, soloActivos])
 
   const handleDelete = async (id) => {
     try {
       await anuncioService.delete(id)
       message.success('Anuncio eliminado')
-      fetchAnuncios(pagination.current, pagination.pageSize)
+      doFetch(pagination.current, pagination.pageSize, soloActivos, filterTipo, filterCiclo, search)
     } catch (err) {
       message.error(err?.response?.data?.message || 'Error al eliminar el anuncio')
     }
@@ -180,7 +184,7 @@ export default function AnunciosList() {
   const handleToggleDestacado = async (id) => {
     try {
       await anuncioService.toggleDestacado(id)
-      fetchAnuncios(pagination.current, pagination.pageSize)
+      doFetch(pagination.current, pagination.pageSize, soloActivos, filterTipo, filterCiclo, search)
     } catch {
       message.error('Error al cambiar el estado del anuncio')
     }
@@ -305,7 +309,7 @@ export default function AnunciosList() {
       return {
         borderRadius: 12,
         border: `2px solid ${typeColor}`,
-        background: isDark ? '#141414' : 'white',
+        background: isDark ? '#252526' : 'white',
         boxShadow: `0 4px 20px ${typeColor}40`,
         opacity: !anuncio.activo ? 0.65 : 1,
         height: '100%',
@@ -315,14 +319,14 @@ export default function AnunciosList() {
         cursor: 'pointer',
       }
     }
-    const neutral = isDark ? '#303030' : '#e8e8e8'
+    const neutral = isDark ? '#3e3e42' : '#e8e8e8'
     return {
       borderRadius: 12,
       borderTop:    `1px solid ${neutral}`,
       borderRight:  `1px solid ${neutral}`,
       borderBottom: `1px solid ${neutral}`,
       borderLeft:   `4px solid ${typeColor}`,
-      background: isDark ? '#141414' : 'white',
+      background: isDark ? '#252526' : 'white',
       opacity: !anuncio.activo ? 0.65 : 1,
       height: '100%',
       display: 'flex',
@@ -384,10 +388,12 @@ export default function AnunciosList() {
             </Select>
           </Col>
           <Col>
-            <Space size={8}>
-              <Text type="secondary" style={{ fontSize: 13, whiteSpace: 'nowrap' }}>Solo activos</Text>
-              <Switch checked={soloActivos} onChange={setSoloActivos} size="small" />
-            </Space>
+            <Switch
+              checked={soloActivos}
+              onChange={setSoloActivos}
+              checkedChildren="Vigentes"
+              unCheckedChildren="Todos"
+            />
           </Col>
         </Row>
       </Card>
@@ -498,7 +504,7 @@ export default function AnunciosList() {
                       {/* Footer */}
                       <div style={{
                         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                        borderTop: `1px solid ${isDark ? '#303030' : '#f0f0f0'}`,
+                        borderTop: `1px solid ${isDark ? '#3e3e42' : '#f0f0f0'}`,
                         paddingTop: 10, marginTop: 'auto',
                       }}>
                         <Space size={6}>
@@ -535,7 +541,7 @@ export default function AnunciosList() {
                   current={pagination.current}
                   pageSize={pagination.pageSize}
                   total={pagination.total}
-                  onChange={(page, pageSize) => fetchAnuncios(page, pageSize)}
+                  onChange={(page, pageSize) => doFetch(page, pageSize, soloActivos, filterTipo, filterCiclo, search)}
                   showSizeChanger
                   pageSizeOptions={['9', '18', '27']}
                   showTotal={total => `${total} anuncios`}

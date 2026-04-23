@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Table, Button, Input, Select, Tag, Space, Typography, Card,
-  Popconfirm, message, Tooltip, Row, Col
+  Popconfirm, message, Tooltip, Row, Col, Switch
 } from 'antd'
 import {
   PlusOutlined, SearchOutlined, EditOutlined, DeleteOutlined, EyeOutlined
@@ -32,13 +32,15 @@ export default function EmpresasList() {
   const [loading, setLoading] = useState(false)
   const [search, setSearch] = useState('')
   const [sectorFilter, setSectorFilter] = useState(null)
+  const [modalidadFilter, setModalidadFilter] = useState(null)
+  const [soloActivas, setSoloActivas] = useState(true)
   const [pagination, setPagination] = useState({ current: 1, pageSize: 10, total: 0 })
   const [sortInfo, setSortInfo] = useState({ columnKey: 'nombre', order: 'ascend' })
 
-  const fetchEmpresas = async (page = 1, pageSize = pagination.pageSize, si = sortInfo) => {
+  const fetchEmpresas = async (page = 1, pageSize = pagination.pageSize, si = sortInfo, sa = soloActivas) => {
     setLoading(true)
     try {
-      const params = { page: page - 1, size: pageSize, search, sector: sectorFilter }
+      const params = { page: page - 1, size: pageSize, search, sector: sectorFilter, modalidad: modalidadFilter, ...(sa && { activa: 'true' }) }
       if (si?.order) {
         params.sortBy = si.columnKey
         params.sortDir = si.order === 'ascend' ? 'ASC' : 'DESC'
@@ -54,13 +56,13 @@ export default function EmpresasList() {
     }
   }
 
-  useEffect(() => { fetchEmpresas(1, pagination.pageSize) }, [search, sectorFilter])
+  useEffect(() => { fetchEmpresas(1, pagination.pageSize, sortInfo, soloActivas) }, [search, sectorFilter, modalidadFilter, soloActivas])
 
   const handleTableChange = (pag, _filters, sorter) => {
     const s = Array.isArray(sorter) ? sorter[0] : sorter
     const newInfo = s?.order ? { columnKey: s.columnKey ?? s.field, order: s.order } : null
     setSortInfo(newInfo)
-    fetchEmpresas(pag.current, pag.pageSize, newInfo)
+    fetchEmpresas(pag.current, pag.pageSize, newInfo, soloActivas)
   }
 
   const handleDelete = async (id) => {
@@ -145,11 +147,11 @@ export default function EmpresasList() {
         </Button>
       </div>
 
-      <Card style={{ borderRadius: 12, marginBottom: 16 }}>
-        <Row gutter={12}>
-          <Col flex={1}>
+      <Card style={{ borderRadius: 12, marginBottom: 16 }} bodyStyle={{ padding: '12px 16px' }}>
+        <Row gutter={[12, 8]} align="middle" wrap>
+          <Col flex={1} style={{ minWidth: 200 }}>
             <Input
-              placeholder="Buscar por nombre, CIF..."
+              placeholder="Buscar por nombre, CIF, contacto, teléfono..."
               prefix={<SearchOutlined />}
               value={search}
               onChange={e => setSearch(e.target.value)}
@@ -157,13 +159,32 @@ export default function EmpresasList() {
             />
           </Col>
           <Col>
-            <Select placeholder="Sector" style={{ width: 180 }} allowClear onChange={setSectorFilter}>
-              <Option value="Consultoría TI">Consultoría TI</Option>
-              <Option value="Software">Software</Option>
-              <Option value="Telecomunicaciones">Telecomunicaciones</Option>
-              <Option value="Banca">Banca</Option>
-              <Option value="Industria">Industria</Option>
+            <Select placeholder="Modalidad" style={{ minWidth: 130 }} allowClear onChange={setModalidadFilter}>
+              {['FCT', 'DUAL', 'CONTRATACION', 'MIXTA'].map(m => (
+                <Option key={m} value={m}>
+                  <Tag color={modalidadColors[m]} style={{ margin: 0 }}>{m}</Tag>
+                </Option>
+              ))}
             </Select>
+          </Col>
+          <Col>
+            <Select placeholder="Sector" style={{ minWidth: 180 }} allowClear onChange={setSectorFilter}>
+              {[
+                'Tecnología', 'Desarrollo Software', 'Consultoría TI', 'Cloud & Datos',
+                'Ciberseguridad', 'Telecomunicaciones', 'SaaS', 'E-commerce', 'Big Data',
+                'IA & Machine Learning', 'Fintech', 'Marketing Digital', 'Videojuegos',
+                'DevOps', 'Robótica & IoT', 'HealthTech', 'EdTech', 'Aeroespacial / TI',
+                'Formación TI', 'Retail / Tecnología', 'SaaS / RRHH',
+              ].map(s => <Option key={s} value={s}>{s}</Option>)}
+            </Select>
+          </Col>
+          <Col>
+            <Switch
+              checked={soloActivas}
+              onChange={setSoloActivas}
+              checkedChildren="Activas"
+              unCheckedChildren="Todas"
+            />
           </Col>
         </Row>
       </Card>

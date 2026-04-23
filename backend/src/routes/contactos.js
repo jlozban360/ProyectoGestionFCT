@@ -11,6 +11,7 @@ function mapContacto(row) {
     id: row.id,
     empresaId: row.empresa_id,
     empresaNombre: row.empresa_nombre,
+    empresaCif: row.empresa_cif,
     profesor: row.prof_id ? { id: row.prof_id, nombre: row.prof_nombre, email: row.prof_email } : null,
     fecha: row.fecha,
     tipo: row.tipo,
@@ -23,7 +24,7 @@ function mapContacto(row) {
 }
 
 const BASE_SELECT = `
-  SELECT c.*, e.nombre AS empresa_nombre,
+  SELECT c.*, e.nombre AS empresa_nombre, e.cif AS empresa_cif,
          p.id AS prof_id, p.nombre AS prof_nombre, p.email AS prof_email
   FROM contactos c
   JOIN empresas e ON c.empresa_id = e.id
@@ -48,7 +49,7 @@ router.get('/', async (req, res, next) => {
     if (search) {
       params.push(`%${search}%`);
       const idx = params.length;
-      conditions.push(`(e.nombre ILIKE $${idx} OR c.motivo ILIKE $${idx})`);
+      conditions.push(`(e.nombre ILIKE $${idx} OR c.motivo ILIKE $${idx} OR c.necesidades ILIKE $${idx} OR p.nombre ILIKE $${idx})`);
     }
     if (tipo && VALID_TIPO.includes(tipo.toUpperCase())) {
       params.push(tipo.toUpperCase());
